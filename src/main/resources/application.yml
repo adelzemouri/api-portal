@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: api-portal
+  ssl:
+    bundle:
+      pem:
+        # AC du groupe : seule source de confiance pour les control planes WSO2
+        group-ca:
+          truststore:
+            certificate: "file:${GROUP_CA_PEM_PATH}"
+
+# Scopes lecture seule. apim:admin_application_view est à valider par version (question ouverte 4) :
+# si seul apim:admin fonctionne, c'est un sujet sécurité à remonter, pas à contourner.
+wso2-read-scopes: &read-scopes
+  - apim:api_view
+  - apim:subscription_view
+  - apim:admin_application_view
+
+portal:
+  wso2:
+    environments:
+      - name: dev
+        base-url: ${WSO2_DEV_BASE_URL}
+        token-url: ${WSO2_DEV_TOKEN_URL}
+        client-id: ${WSO2_DEV_CLIENT_ID}
+        client-secret: ${WSO2_DEV_CLIENT_SECRET}
+        username: ${WSO2_DEV_USERNAME}
+        password: ${WSO2_DEV_PASSWORD}
+        scopes: *read-scopes
+        ssl-bundle: group-ca
+      - name: sim
+        base-url: ${WSO2_SIM_BASE_URL}
+        token-url: ${WSO2_SIM_TOKEN_URL}
+        client-id: ${WSO2_SIM_CLIENT_ID}
+        client-secret: ${WSO2_SIM_CLIENT_SECRET}
+        username: ${WSO2_SIM_USERNAME}
+        password: ${WSO2_SIM_PASSWORD}
+        scopes: *read-scopes
+        ssl-bundle: group-ca
+      - name: uat
+        base-url: ${WSO2_UAT_BASE_URL}
+        token-url: ${WSO2_UAT_TOKEN_URL}
+        client-id: ${WSO2_UAT_CLIENT_ID}
+        client-secret: ${WSO2_UAT_CLIENT_SECRET}
+        username: ${WSO2_UAT_USERNAME}
+        password: ${WSO2_UAT_PASSWORD}
+        scopes: *read-scopes
+        ssl-bundle: group-ca
+      - name: exp
+        base-url: ${WSO2_EXP_BASE_URL}
+        token-url: ${WSO2_EXP_TOKEN_URL}
+        client-id: ${WSO2_EXP_CLIENT_ID}
+        client-secret: ${WSO2_EXP_CLIENT_SECRET}
+        username: ${WSO2_EXP_USERNAME}
+        password: ${WSO2_EXP_PASSWORD}
+        scopes: *read-scopes
+        ssl-bundle: group-ca
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
