@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Tone } from './format';
+import { TranslatePipe } from './i18n';
 
 export interface BarItem {
   key: string;
@@ -20,7 +21,7 @@ export interface BarItem {
 @Component({
   selector: 'app-bar-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <ul class="bars" [attr.aria-label]="label">
       @for (item of items; track item.key) {
@@ -38,7 +39,7 @@ export interface BarItem {
           <span class="bar-value">{{ format(item.value) }}</span>
         </li>
       } @empty {
-        <li class="bar-empty">{{ empty }}</li>
+        <li class="bar-empty">{{ empty | t }}</li>
       }
     </ul>
   `,

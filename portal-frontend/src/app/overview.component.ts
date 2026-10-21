@@ -8,6 +8,7 @@ import { CatalogService } from './catalog.service';
 import { CopyButtonComponent } from './copy-button.component';
 import { EnvironmentStore, LoadState } from './environment.store';
 import { compactNumber, formatInt, formatMs, formatPercent, formatRelative, statusTone, subscriptionStatusLabel } from './format';
+import { I18nService, TranslatePipe } from './i18n';
 import { MetricsNoticeComponent } from './metrics-notice.component';
 import { PeriodSwitchComponent } from './period-switch.component';
 import { TimeSeriesChartComponent } from './time-series-chart.component';
@@ -19,12 +20,12 @@ import { TimeSeriesChartComponent } from './time-series-chart.component';
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [BarListComponent, CopyButtonComponent, MetricsNoticeComponent, PeriodSwitchComponent, RouterLink, TimeSeriesChartComponent],
+  imports: [BarListComponent, CopyButtonComponent, MetricsNoticeComponent, PeriodSwitchComponent, RouterLink, TimeSeriesChartComponent, TranslatePipe],
   template: `
     <div class="page-head page-head-row">
       <div>
-        <h2>Overview <span class="page-env">{{ store.selected()?.label }}</span></h2>
-        <p class="lede">How your APIs are used in this environment, and how to reach them.</p>
+        <h2>{{ 'Overview' | t }} <span class="page-env">{{ store.selected()?.label }}</span></h2>
+        <p class="lede">{{ 'How your APIs are used in this environment, and how to reach them.' | t }}</p>
       </div>
       <app-period-switch />
     </div>
@@ -33,72 +34,72 @@ import { TimeSeriesChartComponent } from './time-series-chart.component';
 
     @if (store.selected(); as env) {
       <p class="catalog-strip">
-        <a routerLink="/apis"><strong>{{ env.sync.apis }}</strong> APIs</a>
-        <a routerLink="/applications"><strong>{{ env.sync.applications }}</strong> applications</a>
-        <span><strong>{{ env.sync.subscriptions }}</strong> subscriptions</span>
-        <span class="strip-sync" [attr.data-state]="env.sync.state">Catalog {{ syncText() }}</span>
+        <a routerLink="/apis"><strong>{{ env.sync.apis }}</strong> {{ 'APIs' | t }}</a>
+        <a routerLink="/applications"><strong>{{ env.sync.applications }}</strong> {{ 'applications' | t }}</a>
+        <span><strong>{{ env.sync.subscriptions }}</strong> {{ 'subscriptions' | t }}</span>
+        <span class="strip-sync" [attr.data-state]="env.sync.state">{{ 'Catalog {state}' | t: { state: syncText() } }}</span>
       </p>
     }
 
     @if (showTraffic(); as t) {
       <section class="section" aria-labelledby="traffic-title">
         <div class="section-head">
-          <h3 id="traffic-title" class="section-title">Traffic</h3>
+          <h3 id="traffic-title" class="section-title">{{ 'Traffic' | t }}</h3>
           @if (t.status.lastSuccessAt) {
-            <span class="muted section-meta">Read from Splunk {{ readAgo() }}</span>
+            <span class="muted section-meta">{{ 'Read from Splunk {ago}' | t: { ago: readAgo() } }}</span>
           }
         </div>
 
         <div class="kpis">
-          <div class="kpi" title="Total calls on the period">
-            <span class="kpi-label">Calls</span>
+          <div class="kpi" [attr.title]="'Total calls on the period' | t">
+            <span class="kpi-label">{{ 'Calls' | t }}</span>
             <span class="kpi-value">{{ compact(t.totals.calls) }}</span>
-            <span class="kpi-note">{{ t.activeApis }} of {{ t.catalogApis }} APIs called</span>
+            <span class="kpi-note">{{ '{n} of {total} APIs called' | t: { n: t.activeApis, total: t.catalogApis } }}</span>
           </div>
           <div class="kpi">
-            <span class="kpi-label">Error rate</span>
+            <span class="kpi-label">{{ 'Error rate' | t }}</span>
             <span class="kpi-value">{{ percent(t.totals.errorRate) }}</span>
-            <span class="kpi-note">{{ int(t.totals.errors4xx) }} client (4xx) · {{ int(t.totals.errors5xx) }} server (5xx)</span>
+            <span class="kpi-note">{{ '{client} client (4xx) · {server} server (5xx)' | t: { client: int(t.totals.errors4xx), server: int(t.totals.errors5xx) } }}</span>
           </div>
           <div class="kpi">
-            <span class="kpi-label">Latency p95</span>
+            <span class="kpi-label">{{ 'Latency p95' | t }}</span>
             <span class="kpi-value">{{ ms(t.totals.p95LatencyMs) }}</span>
-            <span class="kpi-note">average {{ ms(t.totals.avgLatencyMs) }}</span>
+            <span class="kpi-note">{{ 'average {value}' | t: { value: ms(t.totals.avgLatencyMs) } }}</span>
           </div>
           <div class="kpi">
-            <span class="kpi-label">Active applications</span>
+            <span class="kpi-label">{{ 'Active applications' | t }}</span>
             <span class="kpi-value">{{ t.activeApplications }}</span>
-            <span class="kpi-note">of {{ t.catalogApplications }} applications</span>
+            <span class="kpi-note">{{ 'of {total} applications' | t: { total: t.catalogApplications } }}</span>
           </div>
         </div>
 
         <div class="chart-pair">
           <article class="chart">
-            <h4>Calls</h4>
-            <app-time-series [points]="t.timeline" metric="calls" title="Calls" [period]="store.period()" />
+            <h4>{{ 'Calls' | t }}</h4>
+            <app-time-series [points]="t.timeline" metric="calls" [title]="'Calls' | t" [period]="store.period()" />
           </article>
           <article class="chart">
-            <h4>Errors <span class="muted">(status 400 and above)</span></h4>
-            <app-time-series [points]="t.timeline" metric="errors" title="Errors" tone="err" [period]="store.period()" />
+            <h4>{{ 'Errors' | t }} <span class="muted">{{ '(status 400 and above)' | t }}</span></h4>
+            <app-time-series [points]="t.timeline" metric="errors" [title]="'Errors' | t" tone="err" [period]="store.period()" />
           </article>
         </div>
 
         <div class="chart-grid">
           <article class="chart">
-            <h4>Most called APIs</h4>
-            <app-bar-list label="Most called APIs" empty="No call on this period" [items]="apiBars(t.topApis, 'calls')" [format]="compact" />
+            <h4>{{ 'Most called APIs' | t }}</h4>
+            <app-bar-list [label]="'Most called APIs' | t" empty="No call on this period" [items]="apiBars(t.topApis, 'calls')" [format]="compact" />
           </article>
           <article class="chart">
-            <h4>Highest error rate <span class="muted">(20+ calls)</span></h4>
-            <app-bar-list label="APIs with the highest error rate" empty="No error on this period" [items]="apiBars(t.highestErrorRate, 'errorRate')" [format]="percent" />
+            <h4>{{ 'Highest error rate' | t }} <span class="muted">{{ '(20+ calls)' | t }}</span></h4>
+            <app-bar-list [label]="'APIs with the highest error rate' | t" empty="No error on this period" [items]="apiBars(t.highestErrorRate, 'errorRate')" [format]="percent" />
           </article>
           <article class="chart">
-            <h4>Slowest APIs <span class="muted">(p95)</span></h4>
-            <app-bar-list label="Slowest APIs" empty="No call on this period" [items]="apiBars(t.slowest, 'p95LatencyMs')" [format]="ms" />
+            <h4>{{ 'Slowest APIs' | t }} <span class="muted">(p95)</span></h4>
+            <app-bar-list [label]="'Slowest APIs' | t" empty="No call on this period" [items]="apiBars(t.slowest, 'p95LatencyMs')" [format]="ms" />
           </article>
           <article class="chart">
-            <h4>Top consumers</h4>
-            <app-bar-list label="Applications with the most calls" empty="No call on this period" [items]="appBars(t)" [format]="compact" />
+            <h4>{{ 'Top consumers' | t }}</h4>
+            <app-bar-list [label]="'Applications with the most calls' | t" empty="No call on this period" [items]="appBars(t)" [format]="compact" />
           </article>
         </div>
       </section>
@@ -106,23 +107,23 @@ import { TimeSeriesChartComponent } from './time-series-chart.component';
 
     @switch (state()) {
       @case ('loading') {
-        <p class="state-msg">Loading the subscriptions…</p>
+        <p class="state-msg">{{ 'Loading the subscriptions…' | t }}</p>
       }
       @case ('error') {
-        <p class="state-msg banner banner-error" role="alert">Unable to load the overview.</p>
+        <p class="state-msg banner banner-error" role="alert">{{ 'Unable to load the overview.' | t }}</p>
       }
       @default {
         @if (data(); as overview) {
           <section class="section" aria-labelledby="subs-title">
-            <h3 id="subs-title" class="section-title">Subscriptions</h3>
+            <h3 id="subs-title" class="section-title">{{ 'Subscriptions' | t }}</h3>
             <div class="chart-pair">
               <article class="chart">
-                <h4>By status</h4>
-                <app-bar-list label="Subscriptions by status" [items]="statusBars(overview.subscriptionsByStatus)" [total]="total(overview.subscriptionsByStatus)" />
+                <h4>{{ 'By status' | t }}</h4>
+                <app-bar-list [label]="'Subscriptions by status' | t" [items]="statusBars(overview.subscriptionsByStatus)" [total]="total(overview.subscriptionsByStatus)" />
               </article>
               <article class="chart">
-                <h4>By throttling policy</h4>
-                <app-bar-list label="Subscriptions by policy" [items]="policyBars(overview.subscriptionsByPolicy)" [total]="total(overview.subscriptionsByPolicy)" />
+                <h4>{{ 'By throttling policy' | t }}</h4>
+                <app-bar-list [label]="'Subscriptions by policy' | t" [items]="policyBars(overview.subscriptionsByPolicy)" [total]="total(overview.subscriptionsByPolicy)" />
               </article>
             </div>
           </section>
@@ -130,58 +131,58 @@ import { TimeSeriesChartComponent } from './time-series-chart.component';
       }
     }
 
-    <section class="section split" aria-label="Get started">
+    <section class="section split" [attr.aria-label]="'Get started' | t">
       <aside class="callout callout-stack" aria-labelledby="deploy-callout">
-        <h3 id="deploy-callout">Deploying an API?</h3>
-        <p>Use the <strong>swagger-deploy</strong> GitLab component to deploy your API to WSO2.</p>
+        <h3 id="deploy-callout">{{ 'Deploying an API?' | t }}</h3>
+        <p [innerHTML]="'Use the <strong>swagger-deploy</strong> GitLab component to deploy your API to WSO2.' | t"></p>
         <div class="callout-actions">
           @if (store.portal().deployComponentUrl; as url) {
-            <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener noreferrer">Open the component <span class="sr-only">(new tab)</span><span aria-hidden="true">↗</span></a>
+            <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener noreferrer">{{ 'Open the component' | t }} <span class="sr-only">{{ '(new tab)' | t }}</span><span aria-hidden="true">↗</span></a>
           }
-          <a class="btn" routerLink="/help">How to deploy</a>
+          <a class="btn" routerLink="/help">{{ 'How to deploy' | t }}</a>
         </div>
       </aside>
 
       @if (store.selected(); as env) {
         <section class="panel" aria-labelledby="conn-title">
-          <h3 id="conn-title" class="section-title">Connection details <span class="muted">· {{ env.label }}</span></h3>
+          <h3 id="conn-title" class="section-title">{{ 'Connection details' | t }} <span class="muted">· {{ env.label }}</span></h3>
           <dl class="conn">
             <dt>Identity Server</dt>
             <dd>
               @if (env.identityServerUrl) {
                 <span class="url mono">{{ env.identityServerUrl }}</span>
-                <app-copy-button [text]="env.identityServerUrl" label="Identity Server URL" />
+                <app-copy-button [text]="env.identityServerUrl" [label]="'Identity Server URL' | t" />
               } @else {
-                <span class="muted">Not configured</span>
+                <span class="muted">{{ 'Not configured' | t }}</span>
               }
             </dd>
 
-            <dt>API gateways</dt>
+            <dt>{{ 'API gateways' | t }}</dt>
             <dd>
               @for (gateway of env.gateways; track gateway.name + gateway.vhost) {
                 <div class="conn-line">
                   <span class="gw-name">{{ gateway.name }}</span>
                   <span class="url mono">{{ gateway.url }}</span>
-                  <app-copy-button [text]="gateway.url" [label]="gateway.name + ' gateway URL'" />
+                  <app-copy-button [text]="gateway.url" [label]="'{gateway} gateway URL' | t: { gateway: gateway.name }" />
                 </div>
               } @empty {
-                <span class="muted">No gateway seen yet</span>
+                <span class="muted">{{ 'No gateway seen yet' | t }}</span>
               }
               @if (env.gateways.length) {
-                <p class="conn-hint">The URL of an API is this address followed by its context. Every API page lists its full URLs.</p>
+                <p class="conn-hint">{{ 'The URL of an API is this address followed by its context. Every API page lists its full URLs.' | t }}</p>
               }
             </dd>
 
-            <dt>WSO2 consoles</dt>
+            <dt>{{ 'WSO2 consoles' | t }}</dt>
             <dd>
               @if (env.publisherUrl) {
-                <a [href]="env.publisherUrl" target="_blank" rel="noopener noreferrer">Publisher <span class="sr-only">(new tab)</span><span aria-hidden="true">↗</span></a>
+                <a [href]="env.publisherUrl" target="_blank" rel="noopener noreferrer">Publisher <span class="sr-only">{{ '(new tab)' | t }}</span><span aria-hidden="true">↗</span></a>
               }
               @if (env.devportalUrl) {
-                <a [href]="env.devportalUrl" target="_blank" rel="noopener noreferrer">Devportal <span class="sr-only">(new tab)</span><span aria-hidden="true">↗</span></a>
+                <a [href]="env.devportalUrl" target="_blank" rel="noopener noreferrer">Devportal <span class="sr-only">{{ '(new tab)' | t }}</span><span aria-hidden="true">↗</span></a>
               }
               @if (!env.publisherUrl && !env.devportalUrl) {
-                <span class="muted">Not configured</span>
+                <span class="muted">{{ 'Not configured' | t }}</span>
               }
             </dd>
           </dl>
@@ -190,23 +191,23 @@ import { TimeSeriesChartComponent } from './time-series-chart.component';
     </section>
 
     <section class="section" aria-labelledby="compare-title">
-      <h3 id="compare-title" class="section-title">Environments compared</h3>
-      <div class="table-wrap" tabindex="0" role="region" aria-label="Environments compared">
+      <h3 id="compare-title" class="section-title">{{ 'Environments compared' | t }}</h3>
+      <div class="table-wrap" tabindex="0" role="region" [attr.aria-label]="'Environments compared' | t">
         <table class="list compare">
           <thead>
             <tr>
-              <th scope="col">Environment</th>
-              <th scope="col">APIs</th>
-              <th scope="col">Applications</th>
-              <th scope="col">Subscriptions</th>
-              <th scope="col">Last synchronization</th>
+              <th scope="col">{{ 'Environment' | t }}</th>
+              <th scope="col">{{ 'APIs' | t }}</th>
+              <th scope="col">{{ 'Applications' | t }}</th>
+              <th scope="col">{{ 'Subscriptions' | t }}</th>
+              <th scope="col">{{ 'Last synchronization' | t }}</th>
             </tr>
           </thead>
           <tbody>
             @for (env of store.environments(); track env.key) {
               <tr [class.current]="env.key === store.selectedKey()">
                 <th scope="row">
-                  <button type="button" class="link-btn" (click)="store.select(env.key)" [attr.aria-label]="'Show ' + env.label">{{ env.label }}</button>
+                  <button type="button" class="link-btn" (click)="store.select(env.key)" [attr.aria-label]="'Show {env}' | t: { env: env.label }">{{ env.label }}</button>
                 </th>
                 <td><span class="minibar"><span class="minibar-fill" [style.width.%]="share(env.sync.apis, 'apis')"></span></span> {{ env.sync.apis }}</td>
                 <td><span class="minibar"><span class="minibar-fill" [style.width.%]="share(env.sync.applications, 'applications')"></span></span> {{ env.sync.applications }}</td>
@@ -227,6 +228,7 @@ import { TimeSeriesChartComponent } from './time-series-chart.component';
 export class OverviewComponent {
   private readonly catalog = inject(CatalogService);
   readonly store = inject(EnvironmentStore);
+  private readonly i18n = inject(I18nService);
 
   readonly data = signal<Overview | null>(null);
   readonly state = signal<LoadState>('loading');
@@ -238,17 +240,17 @@ export class OverviewComponent {
     return t && (t.status.state === 'OK' || (t.status.state === 'ERROR' && t.status.lastSuccessAt)) ? t : null;
   });
 
-  readonly readAgo = computed(() => formatRelative(this.traffic()?.status.lastSuccessAt, this.store.now()));
+  readonly readAgo = computed(() => (this.i18n.lang(), formatRelative(this.traffic()?.status.lastSuccessAt, this.store.now())));
 
   readonly syncText = computed(() => {
     const sync = this.store.selected()?.sync;
     switch (sync?.state) {
       case 'OK':
-        return `synchronized ${formatRelative(sync.lastSuccessAt, this.store.now())}`;
+        return this.i18n.t('synchronized {ago}', { ago: formatRelative(sync.lastSuccessAt, this.store.now()) });
       case 'ERROR':
-        return 'synchronization failed';
+        return this.i18n.t('synchronization failed');
       default:
-        return 'not synchronized yet';
+        return this.i18n.t('not synchronized yet');
     }
   });
 
@@ -357,12 +359,12 @@ export class OverviewComponent {
 
   syncOf(env: Environment): string {
     if (env.sync.state === 'NEVER') {
-      return 'Never synchronized';
+      return this.i18n.t('Never synchronized');
     }
     if (env.sync.state === 'ERROR') {
       return env.sync.lastSuccessAt
-        ? `Failed (last success ${formatRelative(env.sync.lastSuccessAt, this.store.now())})`
-        : 'Failed (never succeeded)';
+        ? this.i18n.t('Failed (last success {ago})', { ago: formatRelative(env.sync.lastSuccessAt, this.store.now()) })
+        : this.i18n.t('Failed (never succeeded)');
     }
     return formatRelative(env.sync.lastSuccessAt, this.store.now());
   }

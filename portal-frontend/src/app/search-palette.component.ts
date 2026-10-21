@@ -6,6 +6,7 @@ import { Api, Application, SearchResult } from './api.models';
 import { CatalogService } from './catalog.service';
 import { EnvironmentStore } from './environment.store';
 import { lifeCycleLabel } from './format';
+import { I18nService, TranslatePipe } from './i18n';
 
 interface Option {
   id: string;
@@ -20,6 +21,7 @@ interface Option {
 @Component({
   selector: 'app-search-palette',
   standalone: true,
+  imports: [TranslatePipe],
   template: `
     @if (open) {
       <div class="palette-backdrop" (click)="close()">
@@ -27,7 +29,7 @@ interface Option {
           class="palette"
           role="dialog"
           aria-modal="true"
-          aria-label="Search APIs and applications"
+          [attr.aria-label]="'Search APIs and applications' | t"
           (click)="$event.stopPropagation()"
           (keydown)="onKey($event)"
         >
@@ -37,18 +39,18 @@ interface Option {
               #input
               type="search"
               role="combobox"
-              aria-label="Search"
+              [attr.aria-label]="'Search' | t"
               aria-autocomplete="list"
               aria-controls="palette-results"
               [attr.aria-expanded]="options().length > 0"
               [attr.aria-activedescendant]="options().length ? 'palette-option-' + active() : null"
-              [placeholder]="'Search APIs and applications in ' + (store.selected()?.label ?? '')"
+              [placeholder]="'Search APIs and applications in {env}' | t: { env: store.selected()?.label ?? '' }"
               [value]="query()"
               (input)="query.set(valueOf($event))"
             />
             <kbd>Esc</kbd>
           </div>
-          <ul id="palette-results" role="listbox" aria-label="Results">
+          <ul id="palette-results" role="listbox" [attr.aria-label]="'Results' | t">
             @for (option of options(); track option.id; let i = $index) {
               <li
                 role="option"
@@ -58,7 +60,7 @@ interface Option {
                 (click)="choose(option)"
                 (mousemove)="active.set(i)"
               >
-                <span class="palette-kind">{{ option.kind }}</span>
+                <span class="palette-kind">{{ option.kind | t }}</span>
                 <span class="palette-title">{{ option.title }}</span>
                 <span class="palette-detail muted">{{ option.detail }}</span>
               </li>
@@ -74,6 +76,7 @@ export class SearchPaletteComponent implements OnChanges {
   private readonly catalog = inject(CatalogService);
   private readonly router = inject(Router);
   readonly store = inject(EnvironmentStore);
+  private readonly i18n = inject(I18nService);
 
   @Input() open = false;
   @Output() closed = new EventEmitter<void>();
@@ -94,13 +97,13 @@ export class SearchPaletteComponent implements OnChanges {
 
   readonly status = computed(() => {
     if (!this.query().trim()) {
-      return 'Type to search.';
+      return this.i18n.t('Type to search.');
     }
     if (!this.searched()) {
-      return 'Searching…';
+      return this.i18n.t('Searching…');
     }
     const count = this.options().length;
-    return count === 0 ? 'No result.' : `${count} result${count === 1 ? '' : 's'}.`;
+    return count === 0 ? this.i18n.t('No result.') : this.i18n.t(count === 1 ? '{n} result.' : '{n} results.', { n: count });
   });
 
   constructor() {

@@ -15,9 +15,16 @@ cd ../portal-frontend && npm install && npm start      # http://localhost:4200
 ## Tests et build
 
 ```bash
-npx ng test --watch=false --browsers=ChromeHeadless    # Google Chrome requis
+npx ng test --watch=false --browsers=ChromeHeadless    # Google Chrome requis (CHROME_BIN si besoin)
 npx ng build
 ```
+
+## Langues
+
+Interface en français et en anglais (bouton FR/EN de la barre du haut, choix gardé dans `localStorage`, sinon langue du
+navigateur). Sans bibliothèque : `src/app/i18n.ts` (service, pipe `t`) et `src/app/i18n.fr.ts`. Le texte anglais sert
+de clé ; un texte absent du dictionnaire s'affiche en anglais. Tout nouveau libellé passe par `| t` ou `i18n.t()` et
+reçoit sa traduction dans `i18n.fr.ts`.
 
 ## Points d'attention
 

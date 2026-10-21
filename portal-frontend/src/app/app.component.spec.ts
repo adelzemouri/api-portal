@@ -4,6 +4,7 @@ import { AppComponent } from './app.component';
 import { CatalogService } from './catalog.service';
 import { EnvironmentStore } from './environment.store';
 import { fakeStore } from './testing';
+import { I18nService } from './i18n';
 
 describe('AppComponent', () => {
   function render(store = fakeStore()) {
@@ -111,8 +112,37 @@ describe('AppComponent', () => {
     const { el } = render();
 
     expect(el.textContent?.toLowerCase()).not.toContain('synchronize now');
-    // Seuls le bouton de recherche et les quatre boutons d'environnement.
-    expect(el.querySelectorAll('button').length).toBe(5);
+    // Seuls la recherche, les quatre environnements et les deux langues.
+    expect(el.querySelectorAll('button').length).toBe(7);
+  });
+
+  it('switches the whole interface between English and French from the header', () => {
+    const { fixture, el } = render();
+    const langButton = (label: string) =>
+      Array.from(el.querySelectorAll<HTMLButtonElement>('.lang-switch button')).find((b) => b.textContent?.trim() === label)!;
+    const navTexts = () => Array.from(el.querySelectorAll('nav a')).map((a) => a.textContent?.trim());
+
+    try {
+      langButton('FR').click();
+      fixture.detectChanges();
+      expect(navTexts()).toEqual(['Accueil', 'API', 'Applications', 'Aide']);
+      expect(langButton('FR').getAttribute('aria-pressed')).toBe('true');
+      expect(document.documentElement.lang).toBe('fr');
+
+      langButton('EN').click();
+      fixture.detectChanges();
+      expect(navTexts()).toEqual(['Overview', 'APIs', 'Applications', 'Help']);
+      expect(langButton('EN').getAttribute('aria-pressed')).toBe('true');
+    } finally {
+      TestBed.inject(I18nService).set('en');
+    }
+  });
+
+  it('shows the clocks of the teams and the last synchronization of each environment in the side menu', () => {
+    const { el } = render();
+
+    expect(Array.from(el.querySelectorAll('.clocks .clock-city')).map((c) => c.textContent?.trim())).toEqual(['Lisbon', 'Lausanne', 'Singapore']);
+    expect(el.querySelectorAll('.side-sync li').length).toBe(4);
   });
 
   it('announces demo mode (mock data) and only then', () => {

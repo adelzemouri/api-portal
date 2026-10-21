@@ -1,6 +1,7 @@
 import { Component, ElementRef, Input, OnChanges, computed, inject, signal } from '@angular/core';
 import { Period, TimePoint } from './api.models';
 import { compactNumber, formatInt } from './format';
+import { I18nService, TranslatePipe, currentLocale, translate } from './i18n';
 
 const W = 720;
 const H = 200;
@@ -33,16 +34,17 @@ export function niceMax(value: number): number {
 @Component({
   selector: 'app-time-series',
   standalone: true,
+  imports: [TranslatePipe],
   template: `
     @if (points.length === 0) {
-      <p class="ts-empty">No traffic recorded in this period.</p>
+      <p class="ts-empty">{{ 'No traffic recorded in this period.' | t }}</p>
     } @else {
       <figure class="ts" [attr.data-tone]="tone">
         <div
           class="ts-frame"
           tabindex="0"
           role="group"
-          [attr.aria-label]="title + ': use the left and right arrow keys to read each point'"
+          [attr.aria-label]="'{title}: use the left and right arrow keys to read each point' | t: { title: title }"
           (pointermove)="onPointer($event)"
           (pointerleave)="hover.set(null)"
           (keydown)="onKey($event)"
@@ -72,11 +74,11 @@ export function niceMax(value: number): number {
           }
         </div>
         <details class="ts-table">
-          <summary>View data as a table</summary>
+          <summary>{{ 'View data as a table' | t }}</summary>
           <table>
             <thead>
               <tr>
-                <th scope="col">Time</th>
+                <th scope="col">{{ 'Time' | t }}</th>
                 <th scope="col" class="num">{{ title }}</th>
               </tr>
             </thead>
@@ -96,6 +98,7 @@ export function niceMax(value: number): number {
 })
 export class TimeSeriesChartComponent implements OnChanges {
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly i18n = inject(I18nService);
 
   @Input({ required: true }) points: TimePoint[] = [];
   @Input() metric: 'calls' | 'errors' = 'calls';
@@ -139,7 +142,7 @@ export class TimeSeriesChartComponent implements OnChanges {
   }
 
   readonly ticks = computed<Tick[]>(() =>
-    [0, this.max() / 2, this.max()].map((value) => ({ value, label: compactNumber(value), y: this.y(value) })),
+    (this.i18n.lang(), [0, this.max() / 2, this.max()]).map((value) => ({ value, label: compactNumber(value), y: this.y(value) })),
   );
 
   readonly linePath = computed(() =>
@@ -156,6 +159,7 @@ export class TimeSeriesChartComponent implements OnChanges {
   });
 
   readonly xLabels = computed(() => {
+    this.i18n.lang();
     const n = this.source().length;
     if (n === 0) {
       return [];
@@ -169,6 +173,7 @@ export class TimeSeriesChartComponent implements OnChanges {
   });
 
   readonly active = computed(() => {
+    this.i18n.lang();
     const index = this.hover();
     const point = index === null ? undefined : this.source()[index];
     if (index === null || !point) {
@@ -179,10 +184,11 @@ export class TimeSeriesChartComponent implements OnChanges {
   });
 
   readonly rows = computed(() =>
-    this.source().map((p, i) => ({ timeLabel: this.fullTime(p.time), valueLabel: formatInt(this.values()[i]) })),
+    (this.i18n.lang(), this.source()).map((p, i) => ({ timeLabel: this.fullTime(p.time), valueLabel: formatInt(this.values()[i]) })),
   );
 
   readonly summary = computed(() => {
+    this.i18n.lang();
     const values = this.values();
     if (values.length === 0) {
       return this.title;
@@ -190,11 +196,11 @@ export class TimeSeriesChartComponent implements OnChanges {
     const total = values.reduce((a, b) => a + b, 0);
     const peak = Math.max(...values);
     const peakAt = this.fullTime(this.source()[values.indexOf(peak)].time);
-    return `${this.title} over the period: ${formatInt(total)} in total, peak ${formatInt(peak)} at ${peakAt}`;
+    return translate('{title} over the period: {total} in total, peak {peak} at {at}', { title: this.title, total: formatInt(total), peak: formatInt(peak), at: peakAt });
   });
 
   private unit(): string {
-    return this.kind() === 'calls' ? 'calls' : 'errors';
+    return translate(this.kind() === 'calls' ? 'calls' : 'errors');
   }
 
   onPointer(event: PointerEvent): void {
@@ -226,14 +232,14 @@ export class TimeSeriesChartComponent implements OnChanges {
   private axisTime(iso: string): string {
     const date = new Date(iso);
     return this.span() === '24h'
-      ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(date)
-      : new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(date);
+      ? new Intl.DateTimeFormat(currentLocale(), { hour: '2-digit', minute: '2-digit' }).format(date)
+      : new Intl.DateTimeFormat(currentLocale(), { day: 'numeric', month: 'short' }).format(date);
   }
 
   private fullTime(iso: string): string {
     const date = new Date(iso);
     return this.span() === '24h'
-      ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date)
-      : new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(date);
+      ? new Intl.DateTimeFormat(currentLocale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date)
+      : new Intl.DateTimeFormat(currentLocale(), { weekday: 'short', day: 'numeric', month: 'short' }).format(date);
   }
 }

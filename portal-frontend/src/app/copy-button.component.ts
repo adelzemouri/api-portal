@@ -1,12 +1,14 @@
 import { Component, Input, OnDestroy, signal } from '@angular/core';
+import { TranslatePipe } from './i18n';
 
 /** Copie un texte dans le presse-papiers et le confirme brièvement (utile pour URL et adresses à coller). */
 @Component({
   selector: 'app-copy-button',
   standalone: true,
+  imports: [TranslatePipe],
   template: `
-    <button type="button" class="copy" (click)="copy()" [attr.aria-label]="(copied() ? 'Copied ' : 'Copy ') + label">
-      {{ copied() ? 'Copied' : 'Copy' }}
+    <button type="button" class="copy" (click)="copy()" [attr.aria-label]="(copied() ? 'Copied {what}' : 'Copy {what}') | t: { what: (label | t) }">
+      {{ (copied() ? 'Copied' : 'Copy') | t }}
     </button>
   `,
 })
