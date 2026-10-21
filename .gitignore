@@ -1,0 +1,19 @@
+# Système / IDE
+.DS_Store
+.idea/
+*.iml
+
+# Builds
+target/
+node_modules/
+dist/
+.angular/
+
+# Secrets et fichiers locaux
+.env
+*.pem
+*.p12
+*.jks
+*.key
+*.zip
+.claude/settings.local.json

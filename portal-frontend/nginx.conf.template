@@ -1,0 +1,28 @@
+# Gabarit substitué au démarrage du conteneur (envsubst intégré à l'image nginx officielle) : seules
+# les variables déclarées dans le Dockerfile (BFF_UPSTREAM_HOST, BFF_UPSTREAM_PORT) sont remplacées.
+#
+# Sert les fichiers statiques Angular avec repli sur index.html (routeur côté client) et relaie /api/
+# vers le BFF. Si la plateforme fait déjà ce routage au niveau de l'ingress, ce bloc location devient
+# inutile : le laisser ne coûte rien, mais il ne doit alors jamais être le seul chemin en production
+# (l'ingress doit rester la référence pour la terminaison TLS).
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Angular gère toutes les routes /apis/dev/xxx, /applications, etc. côté client : sans ce repli,
+    # un rechargement de page sur une route profonde renvoie 404.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://${BFF_UPSTREAM_HOST}:${BFF_UPSTREAM_PORT}/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Une redirection HTTP du BFF ne doit jamais être suivie silencieusement (contrainte du projet).
+        proxy_redirect off;
+    }
+}

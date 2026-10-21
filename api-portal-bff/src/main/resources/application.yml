@@ -1,0 +1,154 @@
+spring:
+  application:
+    name: api-portal-bff
+
+server:
+  forward-headers-strategy: framework   # derrière le reverse proxy
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+portal:
+  sync:
+    enabled: true
+    # Durée ISO-8601. Délai entre la fin d'une synchro et le début de la suivante.
+    interval: PT15M
+  metrics:
+    # Délai entre deux lectures des métriques de trafic. Les recherches Splunk sont plus lourdes que les appels WSO2.
+    interval: PT30M
+    # Splunk est facultatif : sans base-url, le portail n'affiche simplement pas de métriques. Exemple (secret par
+    # variable d'environnement, jamais dans ce fichier) :
+    #   splunk:
+    #     base-url: https://splunk.example:8089
+    #     token: ${SPLUNK_TOKEN}          # jeton d'un compte en lecture seule (recherche sur les index d'analytique)
+    #     ssl-bundle: group-ca
+    #     environments:
+    #       dev: { index: wso2_apim_dev }
+    #       exp: { index: wso2_apim_prod, filter: 'sourcetype="wso2:apim:analytics"' }
+    #     fields:                          # noms des champs, s'ils diffèrent de ceux de WSO2 4.x
+    #       api-name: apiName
+    #       api-version: apiVersion
+    #       application-name: applicationName
+    #       status: proxyResponseCode
+    #       latency: responseLatency
+
+---
+# Configuration des vrais control planes WSO2. Absente en profil « mock » (aucune variable d'environnement requise).
+spring:
+  config:
+    activate:
+      on-profile: "!mock"
+  ssl:
+    bundle:
+      pem:
+        # CA groupe utilisée par les 4 control planes WSO2
+        group-ca:
+          truststore:
+            certificate: ${GROUP_CA_PEM_PATH}
+
+portal:
+  wso2:
+    connect-timeout: 5s
+    read-timeout: 30s
+    page-size: 100
+    # Scopes exigés dans le token. Si WSO2 n'en accorde pas un, le client échoue
+    # immédiatement avec un message explicite (au lieu de 403 plus tard).
+    scopes:
+      - apim:api_view
+      - apim:subscription_view
+      # A VALIDER sur votre version 4.x : scope de lecture des applications (Admin API).
+      # Si seul apim:admin fonctionne, le compte de service aura des droits d'ECRITURE
+      # admin sur EXP : décision à prendre avec la sécurité.
+      - apim:admin_application_view
+    # Métriques de trafic (facultatives) : voir portal.metrics ci-dessous et le README.
+    # L'ordre ci-dessous est l'ordre d'affichage dans le portail.
+    # Adresses affichées aux développeurs (Publisher, Devportal, Identity Server, port des gateways, composant
+    # GitLab de déploiement) : facultatives, https obligatoire, voir portal.links et le README.
+    environments:
+      dev:
+        label: DEV
+        base-url: ${WSO2_DEV_URL}
+        token-url: ${WSO2_DEV_URL}/oauth2/token
+        client-id: ${WSO2_DEV_CLIENT_ID}
+        client-secret: ${WSO2_DEV_CLIENT_SECRET}
+        username: ${WSO2_DEV_USERNAME}
+        password: ${WSO2_DEV_PASSWORD}
+        ssl-bundle: group-ca
+      sim:
+        label: SIM
+        base-url: ${WSO2_SIM_URL}
+        token-url: ${WSO2_SIM_URL}/oauth2/token
+        client-id: ${WSO2_SIM_CLIENT_ID}
+        client-secret: ${WSO2_SIM_CLIENT_SECRET}
+        username: ${WSO2_SIM_USERNAME}
+        password: ${WSO2_SIM_PASSWORD}
+        ssl-bundle: group-ca
+      uat:
+        label: UAT
+        base-url: ${WSO2_UAT_URL}
+        token-url: ${WSO2_UAT_URL}/oauth2/token
+        client-id: ${WSO2_UAT_CLIENT_ID}
+        client-secret: ${WSO2_UAT_CLIENT_SECRET}
+        username: ${WSO2_UAT_USERNAME}
+        password: ${WSO2_UAT_PASSWORD}
+        ssl-bundle: group-ca
+      exp:
+        label: EXP
+        base-url: ${WSO2_EXP_URL}
+        token-url: ${WSO2_EXP_URL}/oauth2/token
+        client-id: ${WSO2_EXP_CLIENT_ID}
+        client-secret: ${WSO2_EXP_CLIENT_SECRET}
+        username: ${WSO2_EXP_USERNAME}
+        password: ${WSO2_EXP_PASSWORD}
+        ssl-bundle: group-ca
+
+---
+# Démo sur données factices : `mvn spring-boot:run -Dspring-boot.run.profiles=mock`
+spring:
+  config:
+    activate:
+      on-profile: mock
+
+server:
+  # L'API n'a pas encore d'authentification (SSO/RBAC = étape 5) : accessible depuis cette machine uniquement.
+  address: 127.0.0.1
+
+portal:
+  links:
+    deploy-component-url: https://gitlab.bank.internal/platform/ci-components/swagger-deploy
+    environments:
+      dev:
+        publisher-url: https://apim-dev.bank.internal/publisher
+        devportal-url: https://apim-dev.bank.internal/devportal
+        identity-server-url: https://is-dev.bank.internal
+        gateway-https-port: 8243
+      sim:
+        publisher-url: https://apim-sim.bank.internal/publisher
+        devportal-url: https://apim-sim.bank.internal/devportal
+        identity-server-url: https://is-sim.bank.internal
+        gateway-https-port: 8243
+      uat:
+        publisher-url: https://apim-uat.bank.internal/publisher
+        devportal-url: https://apim-uat.bank.internal/devportal
+        identity-server-url: https://is-uat.bank.internal
+        gateway-https-port: 8243
+      exp:
+        publisher-url: https://apim.bank.internal/publisher
+        devportal-url: https://apim.bank.internal/devportal
+        identity-server-url: https://is.bank.internal
+
+management:
+  info:
+    env:
+      # Expose uniquement les propriétés `info.*` : le front s'en sert pour afficher le bandeau « Mode démo ».
+      enabled: true
+
+info:
+  portal:
+    mode: mock

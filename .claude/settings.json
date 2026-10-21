@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn -B -ntp verify)",
+      "Bash(mvn -o verify)",
+      "Bash(npx ng test --watch=false --browsers=ChromeHeadless)",
+      "Bash(npx ng build)"
+    ]
+  }
+}

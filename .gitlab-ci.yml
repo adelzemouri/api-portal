@@ -1,0 +1,81 @@
+# Squelette de pipeline (feuille de route, étape 7). Build + tests des deux modules, puis image Docker
+# de chacun ; le déploiement effectif sur Virtuozzo Application Platform n'est pas dans ce fichier — il
+# dépend de l'outillage retenu (API Jelastic, manifest, ou autre) et sera ajouté une fois connu.
+#
+# À adapter : nom du registre (CI_REGISTRY_IMAGE suppose la Container Registry intégrée à GitLab ; à
+# remplacer si un registre interne dédié est imposé), tags de runners, et les inclusions Security ci-dessous
+# une fois activées côté projet GitLab (Secure/Ultimate ou scanners internes équivalents).
+
+stages:
+  - test
+  - build
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
+backend-test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-21
+  cache:
+    key: maven-$CI_COMMIT_REF_SLUG
+    paths:
+      - .m2/repository
+  script:
+    - cd api-portal-bff
+    - mvn -B -ntp $MAVEN_OPTS verify
+  artifacts:
+    when: always
+    reports:
+      junit: api-portal-bff/target/surefire-reports/TEST-*.xml
+
+frontend-test:
+  stage: test
+  # aligné sur portal-frontend/package.json (Node 18, Angular 17) ; à relever après la migration Angular.
+  # Chrome headless en CI tourne en root sans bac à sable : le lanceur ChromeHeadless par défaut (pas de
+  # karma.conf.js personnalisé dans ce dépôt aujourd'hui) peut refuser de démarrer selon l'image retenue.
+  # Non vérifié faute de runner disponible ici ; si ça échoue, ajouter un karma.conf.js avec un
+  # customLaunchers ChromeHeadlessNoSandbox (flag --no-sandbox) plutôt que de contourner le sandbox global.
+  image: node:18-bullseye  # variante glibc + apt, plus simple pour installer Chromium qu'Alpine/musl.
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends chromium
+    - export CHROME_BIN=/usr/bin/chromium
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths:
+      - portal-frontend/node_modules
+  script:
+    - cd portal-frontend
+    - npm ci
+    - npx ng test --watch=false --browsers=ChromeHeadless
+    - npx ng build
+
+backend-image:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/api-portal-bff:$CI_COMMIT_SHORT_SHA" api-portal-bff
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker push "$CI_REGISTRY_IMAGE/api-portal-bff:$CI_COMMIT_SHORT_SHA"
+
+frontend-image:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  rules:
+    # Ne pousse pas au-delà d'un registre interne tant que la migration Angular (voir CLAUDE.md) n'est pas faite.
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/portal-frontend:$CI_COMMIT_SHORT_SHA" portal-frontend
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker push "$CI_REGISTRY_IMAGE/portal-frontend:$CI_COMMIT_SHORT_SHA"
+
+# À ajouter une fois les scanners internes ou GitLab Secure confirmés (analyse de dépendances, SBOM) :
+# include:
+#   - template: Security/SAST.gitlab-ci.yml
+#   - template: Security/Dependency-Scanning.gitlab-ci.yml
+#   - template: Security/Container-Scanning.gitlab-ci.yml
