@@ -4,7 +4,8 @@ import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { CatalogService } from './catalog.service';
 import { EnvironmentStore } from './environment.store';
-import { SearchPaletteComponent } from './search-palette.component';
+import { DetailPanel } from './detail-panel.service';
+import { SearchPaletteComponent, gatewayPath } from './search-palette.component';
 import { APIS, APPLICATIONS, fakeStore } from './testing';
 
 @Component({
@@ -93,19 +94,39 @@ describe('SearchPaletteComponent', () => {
     expect(input().getAttribute('aria-activedescendant')).toBe('palette-option-3');
   }));
 
-  it('opens the API page on Enter, and the filtered applications list for an application', fakeAsync(() => {
+  it('opens the chosen API or application in the side panel, without leaving the page', fakeAsync(() => {
     const { fixture, navigate, typeQuery, press } = setup();
+    const panel = TestBed.inject(DetailPanel);
     typeQuery('pay');
 
     press('Enter');
-    expect(navigate).toHaveBeenCalledWith(['/apis', 'dev', 'p-14'], undefined);
+    expect(panel.current()).toEqual(jasmine.objectContaining({ kind: 'api', env: 'dev', id: 'p-14', name: 'Payments', version: '1.4' }));
     expect(fixture.componentInstance.closed).toBe(1);
 
     // Depuis la première option, « flèche haut » revient à la dernière (Sandbox).
     press('ArrowUp');
     press('Enter');
-    expect(navigate).toHaveBeenCalledWith(['/applications'], { queryParams: { q: 'Sandbox' } });
+    expect(panel.current()).toEqual(jasmine.objectContaining({ kind: 'app', id: 'a2', name: 'Sandbox' }));
+    expect(navigate).not.toHaveBeenCalled();
   }));
+
+  it('recognises a pasted gateway URL and finds the API whose context starts its path', fakeAsync(() => {
+    const { el, search, typeQuery } = setup();
+    search.and.returnValue(of({ apis: [...APIS, { ...APIS[0], apiId: 'p-2', context: '/payments/2.0' }], applications: APPLICATIONS }));
+
+    typeQuery('https://gw-int-dev.bank.internal:8243/payments/1.4/transfers/42?x=1');
+
+    expect(search).toHaveBeenCalledWith('dev', '/payments');
+    expect(Array.from(el.querySelectorAll('[role="option"] .palette-title')).map((o) => o.textContent)).toEqual(['Payments 1.4']);
+  }));
+
+  it('reads the path of a gateway URL, and nothing else', () => {
+    expect(gatewayPath('https://gw.bank.internal:8243/payments/1.4/x/')).toBe('/payments/1.4/x');
+    expect(gatewayPath('http://gw/kyc')).toBe('/kyc');
+    expect(gatewayPath('https://gw.bank.internal/')).toBeNull();
+    expect(gatewayPath('payments')).toBeNull();
+    expect(gatewayPath('/payments/1.4')).toBeNull();
+  });
 
   it('closes on Escape', fakeAsync(() => {
     const { fixture, typeQuery, press } = setup();

@@ -2,8 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { AppComponent } from './app.component';
 import { CatalogService } from './catalog.service';
+import { DetailPanel } from './detail-panel.service';
 import { EnvironmentStore } from './environment.store';
 import { fakeStore } from './testing';
+import { I18nService } from './i18n';
 
 describe('AppComponent', () => {
   function render(store = fakeStore()) {
@@ -22,14 +24,15 @@ describe('AppComponent', () => {
 
   const envButtons = (el: HTMLElement) => Array.from(el.querySelectorAll<HTMLButtonElement>('.env-switch button'));
 
-  it('shows the API Hub wordmark (no icon) in a side menu with the main navigation', () => {
+  it('shows the API Portal logo (braces and dot) and name in a rail with the main navigation', () => {
     const { el } = render();
 
-    expect(el.querySelector('.sidebar .wordmark')?.textContent).toBe('API Hub');
-    expect(el.querySelector('.wordmark')?.getAttribute('aria-label')).toBe('API Hub, home');
-    expect(el.querySelector('.brand-mark, .brand-icon')).toBeNull();
-    expect(el.querySelector('aside.sidebar nav')).not.toBeNull();
-    expect(Array.from(el.querySelectorAll('nav a')).map((a) => a.textContent?.trim())).toEqual(['Overview', 'APIs', 'Applications', 'Help']);
+    expect(el.querySelector('.rail .brand .brand-name')?.textContent).toBe('API Portal');
+    expect(el.querySelector('.brand')?.getAttribute('aria-label')).toBe('API Portal, home');
+    expect(el.querySelector('.brand-mark')?.getAttribute('aria-hidden')).toBe('true');
+    expect(el.querySelector('.brand-mark circle')).not.toBeNull();
+    expect(el.textContent).not.toContain('API Hub');
+    expect(Array.from(el.querySelectorAll('.rail nav a')).map((a) => a.textContent?.trim())).toEqual(['Overview', 'APIs', 'Applications', 'Help']);
     expect(el.querySelector('nav a svg')?.getAttribute('aria-hidden')).toBe('true');
     expect(Array.from(el.querySelectorAll('nav a')).map((a) => a.getAttribute('href'))).toEqual(['/', '/apis', '/applications', '/help']);
   });
@@ -63,7 +66,7 @@ describe('AppComponent', () => {
     expect(envButtons(el)[1].getAttribute('aria-pressed')).toBe('true');
   });
 
-  it("leaves an API page when the environment changes, since the page belongs to one environment", async () => {
+  it('never leaves the current page when the environment changes: the page follows the selector', () => {
     const { fixture, el, router } = render();
     const navigate = spyOn(router, 'navigate').and.resolveTo(true);
     spyOnProperty(router, 'url').and.returnValue('/apis/dev/p-14');
@@ -71,7 +74,22 @@ describe('AppComponent', () => {
     envButtons(el)[1].click();
     fixture.detectChanges();
 
-    expect(navigate).toHaveBeenCalledWith(['/apis']);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('shifts the page to the left while the side panel is open, and closes the panel on navigation', async () => {
+    const { fixture, el, router } = render();
+    const panel = TestBed.inject(DetailPanel);
+
+    panel.open({ kind: 'app', env: 'dev', id: null, name: 'Sandbox' });
+    fixture.detectChanges();
+    expect(el.querySelector('.content')?.classList).toContain('shifted');
+    expect(el.querySelector('aside.drawer')).not.toBeNull();
+
+    await router.navigateByUrl('/');
+    fixture.detectChanges();
+    expect(panel.isOpen()).toBeFalse();
+    expect(el.querySelector('.content')?.classList).not.toContain('shifted');
   });
 
   it('stays on the current page when the environment changes on a list page', () => {
@@ -111,8 +129,38 @@ describe('AppComponent', () => {
     const { el } = render();
 
     expect(el.textContent?.toLowerCase()).not.toContain('synchronize now');
-    // Seuls le bouton de recherche et les quatre boutons d'environnement.
-    expect(el.querySelectorAll('button').length).toBe(5);
+    // Seuls la recherche, les quatre environnements et les deux langues.
+    expect(el.querySelectorAll('button').length).toBe(7);
+  });
+
+  it('switches the whole interface between English and French from the header', () => {
+    const { fixture, el } = render();
+    const langButton = (label: string) =>
+      Array.from(el.querySelectorAll<HTMLButtonElement>('.lang-switch button')).find((b) => b.textContent?.trim() === label)!;
+    const navTexts = () => Array.from(el.querySelectorAll('nav a')).map((a) => a.textContent?.trim());
+
+    try {
+      langButton('FR').click();
+      fixture.detectChanges();
+      expect(navTexts()).toEqual(['Accueil', 'API', 'Applications', 'Aide']);
+      expect(langButton('FR').getAttribute('aria-pressed')).toBe('true');
+      expect(document.documentElement.lang).toBe('fr');
+
+      langButton('EN').click();
+      fixture.detectChanges();
+      expect(navTexts()).toEqual(['Overview', 'APIs', 'Applications', 'Help']);
+      expect(langButton('EN').getAttribute('aria-pressed')).toBe('true');
+    } finally {
+      TestBed.inject(I18nService).set('en');
+    }
+  });
+
+  it('shows the clocks of the teams and the last synchronization of each environment in the rail', () => {
+    const { el } = render();
+
+    expect(Array.from(el.querySelectorAll('.clocks .clock-city')).map((c) => c.textContent?.trim())).toEqual(['Lisbon', 'Lausanne', 'Singapore']);
+    expect(el.querySelectorAll('.rail-sync li').length).toBe(4);
+    expect(el.querySelector('.rail-sync li[data-state="ERROR"]')?.getAttribute('title')).toContain('UAT');
   });
 
   it('announces demo mode (mock data) and only then', () => {

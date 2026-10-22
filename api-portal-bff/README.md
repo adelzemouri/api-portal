@@ -70,7 +70,8 @@ seule la source de données change (`CatalogSource`).
 | `GET /environments/{env}/overview` | Répartitions (statuts d'API et de souscription, politiques) et API les plus consommées |
 | `GET /environments/{env}/search?q=` | Recherche globale : quelques API et applications (vide sans requête) |
 | `GET /environments/{env}/apis` | APIs d'un environnement (nom, version, contexte, statut, nombre de souscriptions) |
-| `GET /environments/{env}/apis/{apiId}` | Détail d'une API : révision déployée, URL complète par gateway, versions présentes dans chaque environnement |
+| `GET /environments/{env}/apis/{apiId}` | Détail d'une API : révision déployée, URL complète par gateway, versions présentes dans chaque environnement (avec dernière révision déployée et sa date) |
+| `GET /deployments?limit=20` | Derniers déploiements, tous environnements, du plus récent au plus ancien (`limit` de 1 à 100) |
 | `GET /environments/{env}/apis/{apiId}/subscriptions` | Applications souscrites à une API (avec propriétaire de l'application) |
 | `GET /environments/{env}/applications` | Applications d'un environnement (propriétaire, nombre d'API souscrites) |
 | `GET /environments/{env}/applications/{applicationId}/subscriptions` | API auxquelles une application est souscrite |

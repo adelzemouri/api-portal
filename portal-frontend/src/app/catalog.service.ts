@@ -9,6 +9,7 @@ import {
   AppMetricsList,
   Application,
   ApplicationMetrics,
+  Deployment,
   Environment,
   InfoResponse,
   MetricsOverview,
@@ -35,6 +36,11 @@ export class CatalogService {
 
   applications(environment: string): Observable<Application[]> {
     return this.http.get<Application[]>(`${this.base(environment)}/applications`);
+  }
+
+  /** Derniers déploiements, tous environnements confondus, du plus récent au plus ancien. */
+  deployments(limit = 20): Observable<Deployment[]> {
+    return this.http.get<Deployment[]>('/api/v1/deployments', { params: { limit } });
   }
 
   portal(): Observable<PortalInfo> {

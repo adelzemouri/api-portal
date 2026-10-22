@@ -32,7 +32,7 @@ describe('HelpComponent', () => {
     expect(rows[0].querySelectorAll('a').length).toBe(2);
     expect(rows[0].textContent).toContain('https://is-dev.bank.internal');
     expect(rows[0].textContent).toContain('https://gw-dev.bank.internal:8243');
-    expect(rows[0].querySelectorAll('app-copy-button').length).toBe(2);
+    expect(rows[0].querySelectorAll('app-copy-button').length).toBe(3);
     expect(rows[1].querySelectorAll('a').length).toBe(0);
     expect(rows[1].textContent).toContain('No gateway seen yet');
     expect(Array.from(rows[0].querySelectorAll('a')).every((a) => a.getAttribute('rel') === 'noopener noreferrer')).toBeTrue();

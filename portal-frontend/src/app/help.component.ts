@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CopyButtonComponent } from './copy-button.component';
 import { EnvironmentStore } from './environment.store';
 import { applicationStatusLabel, lifeCycleLabel, subscriptionStatusLabel } from './format';
+import { TranslatePipe } from './i18n';
 
 interface Term {
   key: string;
@@ -12,47 +13,45 @@ interface Term {
 @Component({
   selector: 'app-help',
   standalone: true,
-  imports: [CopyButtonComponent],
+  imports: [CopyButtonComponent, TranslatePipe],
   template: `
     <div class="page-head">
-      <h2>Help</h2>
-      <p class="lede">How this portal works, what the statuses mean, and where to publish or subscribe.</p>
+      <h2>{{ 'Help' | t }}</h2>
+      <p class="lede">{{ 'How this portal works, what the statuses mean, and where to publish or subscribe.' | t }}</p>
     </div>
 
     <section class="panel help" aria-labelledby="help-deploy">
-      <h3 id="help-deploy" class="section-title">Deploy your API to WSO2</h3>
-      <p>APIs are deployed from GitLab with the <strong>swagger-deploy</strong> CI/CD component.</p>
+      <h3 id="help-deploy" class="section-title">{{ 'Deploy your API to WSO2' | t }}</h3>
+      <p [innerHTML]="'APIs are deployed from GitLab with the <strong>swagger-deploy</strong> CI/CD component.' | t"></p>
       <ol>
-        <li>Describe your API in an <strong>OpenAPI (Swagger)</strong> file, kept in your Git repository.</li>
-        <li>Add the <strong>swagger-deploy</strong> component to your project's <code>.gitlab-ci.yml</code>. Its documentation lists its inputs.</li>
-        <li>Run the pipeline: the component deploys the API to WSO2. Start with the lowest environment, then follow your team's promotion process for the next ones.</li>
-        <li>After the next synchronization your API appears here (the Overview shows when it last ran). Its page gives the URLs to call it.</li>
-        <li>Consumers <strong>subscribe</strong> from the Devportal with an application, under a throttling policy. Subscriptions may need approval.</li>
+        <li [innerHTML]="'Describe your API in an <strong>OpenAPI (Swagger)</strong> file, kept in your Git repository.' | t"></li>
+        <li [innerHTML]="'Add the <strong>swagger-deploy</strong> component to your project’s <code>.gitlab-ci.yml</code>. Its documentation lists its inputs.' | t"></li>
+        <li [innerHTML]="'Run the pipeline: the component deploys the API to WSO2. Start with the lowest environment, then follow your team’s promotion process for the next ones.' | t"></li>
+        <li [innerHTML]="'After the next synchronization your API appears here (the Overview shows when it last ran). Its page gives the URLs to call it.' | t"></li>
+        <li [innerHTML]="'Consumers <strong>subscribe</strong> from the Devportal with an application, under a throttling policy. Subscriptions may need approval.' | t"></li>
       </ol>
       @if (store.portal().deployComponentUrl; as url) {
         <p>
-          <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener noreferrer">Open the swagger-deploy component <span class="sr-only">(new tab)</span><span aria-hidden="true">↗</span></a>
+          <a class="btn btn-primary" [href]="url" target="_blank" rel="noopener noreferrer">{{ 'Open the swagger-deploy component' | t }} <span class="sr-only">{{ '(new tab)' | t }}</span><span aria-hidden="true">↗</span></a>
         </p>
       } @else {
-        <p class="muted">The address of the component is not configured on this portal.</p>
+        <p class="muted">{{ 'The address of the component is not configured on this portal.' | t }}</p>
       }
-      <p class="muted">Before deprecating or retiring an API, open its page here: “Impact of a change” lists the applications and owners to warn.</p>
+      <p class="muted">{{ 'Before deprecating or retiring an API, open its page here: “Impact of a change” lists the applications and owners to warn.' | t }}</p>
     </section>
 
     <section class="panel help" aria-labelledby="help-env">
-      <h3 id="help-env" class="section-title">Environments</h3>
-      <p>
-        The portal shows four WSO2 API Manager environments side by side. <strong>EXP is the production environment.</strong>
-      </p>
-      <div class="table-wrap" tabindex="0" role="region" aria-label="Environments">
+      <h3 id="help-env" class="section-title">{{ 'Environments' | t }}</h3>
+      <p [innerHTML]="'The portal shows four WSO2 API Manager environments side by side. <strong>EXP is the production environment.</strong>' | t"></p>
+      <div class="table-wrap" tabindex="0" role="region" [attr.aria-label]="'Environments' | t">
         <table class="list">
           <thead>
             <tr>
-              <th scope="col">Environment</th>
+              <th scope="col">{{ 'Environment' | t }}</th>
               <th scope="col">Publisher</th>
               <th scope="col">Devportal</th>
               <th scope="col">Identity Server</th>
-              <th scope="col">API gateways</th>
+              <th scope="col">{{ 'API gateways' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -61,14 +60,14 @@ interface Term {
                 <th scope="row">{{ env.label }}</th>
                 <td>
                   @if (env.publisherUrl) {
-                    <a [href]="env.publisherUrl" target="_blank" rel="noopener noreferrer">Open <span class="sr-only">{{ env.label }} Publisher (new tab)</span>↗</a>
+                    <a [href]="env.publisherUrl" target="_blank" rel="noopener noreferrer">{{ 'Open' | t }} <span class="sr-only">{{ '{env} Publisher (new tab)' | t: { env: env.label } }}</span>↗</a>
                   } @else {
                     <span class="muted">—</span>
                   }
                 </td>
                 <td>
                   @if (env.devportalUrl) {
-                    <a [href]="env.devportalUrl" target="_blank" rel="noopener noreferrer">Open <span class="sr-only">{{ env.label }} Devportal (new tab)</span>↗</a>
+                    <a [href]="env.devportalUrl" target="_blank" rel="noopener noreferrer">{{ 'Open' | t }} <span class="sr-only">{{ '{env} Devportal (new tab)' | t: { env: env.label } }}</span>↗</a>
                   } @else {
                     <span class="muted">—</span>
                   }
@@ -76,7 +75,7 @@ interface Term {
                 <td>
                   @if (env.identityServerUrl) {
                     <span class="url mono">{{ env.identityServerUrl }}</span>
-                    <app-copy-button [text]="env.identityServerUrl" [label]="env.label + ' Identity Server URL'" />
+                    <app-copy-button [text]="env.identityServerUrl" [label]="'{env} Identity Server URL' | t: { env: env.label }" />
                   } @else {
                     <span class="muted">—</span>
                   }
@@ -86,10 +85,10 @@ interface Term {
                     <div class="conn-line">
                       <span class="gw-name">{{ gateway.name }}</span>
                       <span class="url mono">{{ gateway.url }}</span>
-                      <app-copy-button [text]="gateway.url" [label]="env.label + ' ' + gateway.name + ' gateway URL'" />
+                      <app-copy-button [text]="gateway.url" [label]="'{env} {gateway} gateway URL' | t: { env: env.label, gateway: gateway.name }" />
                     </div>
                   } @empty {
-                    <span class="muted">No gateway seen yet</span>
+                    <span class="muted">{{ 'No gateway seen yet' | t }}</span>
                   }
                 </td>
               </tr>
@@ -100,53 +99,53 @@ interface Term {
     </section>
 
     <section class="panel help" aria-labelledby="help-how">
-      <h3 id="help-how" class="section-title">How the data is collected</h3>
+      <h3 id="help-how" class="section-title">{{ 'How the data is collected' | t }}</h3>
       <ul>
-        <li>The portal is <strong>read-only</strong>: it never changes anything in WSO2.</li>
-        <li>Data comes from periodic synchronizations of each environment, not from real-time calls. The time of the last successful synchronization is shown on the Overview.</li>
-        <li>If an environment is unreachable, the portal keeps showing its last successful synchronization and says so.</li>
-        <li>Press <kbd>Ctrl</kbd> + <kbd>K</kbd> (<kbd>⌘</kbd> + <kbd>K</kbd> on a Mac) to search APIs and applications from any page.</li>
+        <li [innerHTML]="'The portal is <strong>read-only</strong>: it never changes anything in WSO2.' | t"></li>
+        <li [innerHTML]="'Data comes from periodic synchronizations of each environment, not from real-time calls. The time of the last successful synchronization is shown on the Overview.' | t"></li>
+        <li [innerHTML]="'If an environment is unreachable, the portal keeps showing its last successful synchronization and says so.' | t"></li>
+        <li [innerHTML]="'Press <kbd>Ctrl</kbd> + <kbd>K</kbd> (<kbd>⌘</kbd> + <kbd>K</kbd> on a Mac) to search APIs and applications from any page.' | t"></li>
       </ul>
     </section>
 
     <section class="panel help" aria-labelledby="help-traffic">
-      <h3 id="help-traffic" class="section-title">Reading the traffic figures</h3>
+      <h3 id="help-traffic" class="section-title">{{ 'Reading the traffic figures' | t }}</h3>
       <ul>
-        <li>Calls, errors and latency come from the analytics events of the API gateways, stored in <strong>Splunk</strong> and read periodically (every 30 minutes by default). They are not real time.</li>
-        <li>An <strong>error</strong> is any response with a status of 400 or above: 4xx are client errors (bad request, unauthorized, throttled…), 5xx are server errors.</li>
-        <li><strong>Latency p95</strong> means that 95% of the calls were faster than this value. APIs with fewer than 20 calls are left out of the “highest error rate” and “slowest” rankings.</li>
-        <li>A dash means no call was recorded on the period. Figures are hidden for an environment without a Splunk source.</li>
-        <li>An application is matched to the catalog by its identifier, or by its name when that name is unique in the environment: an ambiguous name is shown without a link.</li>
+        <li [innerHTML]="'Calls, errors and latency come from the analytics events of the API gateways, stored in <strong>Splunk</strong> and read periodically (every 30 minutes by default). They are not real time.' | t"></li>
+        <li [innerHTML]="'An <strong>error</strong> is any response with a status of 400 or above: 4xx are client errors (bad request, unauthorized, throttled…), 5xx are server errors.' | t"></li>
+        <li [innerHTML]="'<strong>Latency p95</strong> means that 95% of the calls were faster than this value. APIs with fewer than 20 calls are left out of the “highest error rate” and “slowest” rankings.' | t"></li>
+        <li [innerHTML]="'A dash means no call was recorded on the period. Figures are hidden for an environment without a Splunk source.' | t"></li>
+        <li [innerHTML]="'An application is matched to the catalog by its identifier, or by its name when that name is unique in the environment: an ambiguous name is shown without a link.' | t"></li>
       </ul>
     </section>
 
     <section class="panel help" aria-labelledby="help-glossary">
-      <h3 id="help-glossary" class="section-title">Glossary</h3>
+      <h3 id="help-glossary" class="section-title">{{ 'Glossary' | t }}</h3>
       <div class="glossary">
         <div>
-          <h4>API status</h4>
+          <h4>{{ 'API status' | t }}</h4>
           <dl>
             @for (term of lifecycle; track term.key) {
               <dt>{{ life(term.key) }}</dt>
-              <dd>{{ term.meaning }}</dd>
+              <dd>{{ term.meaning | t }}</dd>
             }
           </dl>
         </div>
         <div>
-          <h4>Subscription status</h4>
+          <h4>{{ 'Subscription status' | t }}</h4>
           <dl>
             @for (term of subscription; track term.key) {
               <dt>{{ sub(term.key) }}</dt>
-              <dd>{{ term.meaning }}</dd>
+              <dd>{{ term.meaning | t }}</dd>
             }
           </dl>
         </div>
         <div>
-          <h4>Application status</h4>
+          <h4>{{ 'Application status' | t }}</h4>
           <dl>
             @for (term of application; track term.key) {
               <dt>{{ app(term.key) }}</dt>
-              <dd>{{ term.meaning }}</dd>
+              <dd>{{ term.meaning | t }}</dd>
             }
           </dl>
         </div>

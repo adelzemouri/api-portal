@@ -2,6 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { MetricsStatus } from './api.models';
 import { EnvironmentStore } from './environment.store';
 import { formatRelative } from './format';
+import { TranslatePipe } from './i18n';
 
 /**
  * État de la lecture des métriques. Comme pour la synchro du catalogue, l'indisponibilité de Splunk est une donnée
@@ -10,21 +11,22 @@ import { formatRelative } from './format';
 @Component({
   selector: 'app-metrics-notice',
   standalone: true,
+  imports: [TranslatePipe],
   template: `
     @switch (status?.state) {
       @case ('DISABLED') {
-        <p class="banner" role="status">Traffic metrics are not configured for this environment.</p>
+        <p class="banner" role="status">{{ 'Traffic metrics are not configured for this environment.' | t }}</p>
       }
       @case ('NEVER') {
-        <p class="banner" role="status">Traffic metrics have not been read yet. They appear after the first read.</p>
+        <p class="banner" role="status">{{ 'Traffic metrics have not been read yet. They appear after the first read.' | t }}</p>
       }
       @case ('ERROR') {
         <p class="banner banner-error" role="status">
-          Traffic metrics could not be read: {{ status?.error ?? 'unknown error' }}.
+          {{ 'Traffic metrics could not be read: {error}.' | t: { error: status?.error ?? ('unknown error' | t) } }}
           @if (status?.lastSuccessAt) {
-            Showing the last successful read ({{ ago(status?.lastSuccessAt) }}).
+            {{ 'Showing the last successful read ({ago}).' | t: { ago: ago(status?.lastSuccessAt) } }}
           } @else {
-            No data available.
+            {{ 'No data available.' | t }}
           }
         </p>
       }

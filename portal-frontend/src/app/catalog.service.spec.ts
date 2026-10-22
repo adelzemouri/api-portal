@@ -31,6 +31,14 @@ describe('CatalogService', () => {
     requests.forEach((r) => r.flush([]));
   });
 
+  it('reads the latest deployments of every environment from the BFF', () => {
+    service.deployments(5).subscribe();
+
+    const request = http.expectOne('/api/v1/deployments?limit=5');
+    expect(request.request.method).toBe('GET');
+    request.flush([]);
+  });
+
   it('reads the traffic metrics from the BFF, per period, for the whole environment and per API or application', () => {
     service.metrics('dev', '24h').subscribe();
     service.apiMetricsList('dev', '7d').subscribe();

@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { AppMetricsList, ApplicationMetrics } from './api.models';
 import { ApplicationsPageComponent } from './applications-page.component';
 import { CatalogService } from './catalog.service';
+import { DetailPanel } from './detail-panel.service';
 import { EnvironmentStore } from './environment.store';
 import { compactNumber } from './format';
 import { APP_METRICS_LIST, APPLICATION_METRICS, APPLICATIONS, DISABLED, SUBSCRIPTIONS, fakeStore } from './testing';
@@ -35,9 +36,10 @@ describe('ApplicationsPageComponent', () => {
       TestBed.flushEffects();
       fixture.detectChanges();
     };
-    const cells = (row: Element) => Array.from(row.children).slice(0, -1).map((c) => c.textContent?.trim());
-    const headers = () => Array.from(el.querySelectorAll('thead th')).slice(0, -1).map((th) => th.textContent?.replace(/[↑↓]/, '').trim());
-    return { fixture, el, applications, subscriptionsOfApplication, applicationMetricsList, applicationMetrics, queryParamMap, store, settle, cells, headers };
+    const cells = (row: Element) => Array.from(row.children).map((c) => c.textContent?.trim());
+    const headers = () => Array.from(el.querySelectorAll('thead th')).map((th) => th.textContent?.replace(/[↑↓]/, '').trim());
+    const panel = TestBed.inject(DetailPanel);
+    return { fixture, panel, el, applications, subscriptionsOfApplication, applicationMetricsList, applicationMetrics, queryParamMap, store, settle, cells, headers };
   }
 
   it('lists the applications with owner, status, traffic and number of subscribed APIs', () => {
@@ -47,7 +49,7 @@ describe('ApplicationsPageComponent', () => {
 
     expect(applications).toHaveBeenCalledOnceWith('dev');
     expect(applicationMetricsList).toHaveBeenCalledOnceWith('dev', '24h');
-    expect(headers()).toEqual(['Name', 'Owner', 'Status', 'Calls', 'Error rate', 'Subscribed APIs']);
+    expect(headers()).toEqual(['Name', 'Owner', 'Status', 'Calls', 'Errors', 'Subscribed APIs']);
     const rows = Array.from(el.querySelectorAll('tr.row'));
     expect(rows.length).toBe(2);
     expect(cells(rows[0])).toEqual(['Mobile Banking', 'a.martin', 'Approved', compactNumber(7000), '3.0%', '2']);
@@ -60,7 +62,7 @@ describe('ApplicationsPageComponent', () => {
     settle();
 
     expect(headers()).toEqual(['Name', 'Owner', 'Status', 'Subscribed APIs']);
-    expect(Array.from(el.querySelectorAll('.filter span')).map((s) => s.textContent)).not.toContain('Traffic');
+    expect(Array.from(el.querySelectorAll('.chip')).map((c) => c.textContent?.trim())).not.toContain('No call');
     expect(el.textContent).toContain('Traffic metrics are not configured for this environment.');
   });
 
@@ -77,9 +79,7 @@ describe('ApplicationsPageComponent', () => {
 
     search.value = '';
     search.dispatchEvent(new Event('input'));
-    const traffic = Array.from(el.querySelectorAll<HTMLElement>('.filter')).find((f) => f.querySelector('span')?.textContent === 'Traffic')!.querySelector('select')!;
-    traffic.value = 'without';
-    traffic.dispatchEvent(new Event('change'));
+    Array.from(el.querySelectorAll<HTMLButtonElement>('.chip')).find((c) => c.textContent?.trim() === 'No call')!.click();
     fixture.detectChanges();
     expect(el.querySelector('tr.row')?.textContent).toContain('Sandbox');
     expect(el.querySelectorAll('tr.row').length).toBe(1);
@@ -99,55 +99,40 @@ describe('ApplicationsPageComponent', () => {
     expect(el.querySelector('tr.row')?.textContent).toContain('Mobile Banking');
   });
 
-  it('expands a row to show its APIs with the calls each one receives from it', () => {
-    const { fixture, el, subscriptionsOfApplication, applicationMetrics, settle } = setup();
+  it('opens the side panel on a row, without arrows that suggest the row unfolds', () => {
+    const { fixture, el, settle, panel, subscriptionsOfApplication } = setup();
     settle();
 
-    const row = el.querySelector<HTMLElement>('tr.row')!;
-    row.click();
-    fixture.detectChanges();
-
-    expect(subscriptionsOfApplication).toHaveBeenCalledOnceWith('dev', 'a1');
-    expect(applicationMetrics).toHaveBeenCalledOnceWith('dev', 'a1', '24h');
-    const detail = el.querySelector('tr.detail')!;
-    expect(detail.textContent).toContain('Subscribed APIs (2)');
-    expect(Array.from(detail.querySelectorAll('thead th')).map((th) => th.textContent?.trim())).toEqual(['API', 'Version', 'Policy', 'Status', 'Calls', 'Error rate']);
-    const first = Array.from(detail.querySelectorAll('.sub-list tbody tr')[0].children).map((c) => c.textContent?.trim());
-    expect(first).toEqual(['Payments', '1.4', 'Gold', 'Active', compactNumber(6000), '3.0%']);
-    expect(detail.querySelector('a')?.getAttribute('href')).toBe('/apis/dev/p-14');
-    expect(el.querySelector('button.chevron')?.getAttribute('aria-expanded')).toBe('true');
-
-    row.click();
-    fixture.detectChanges();
-    expect(el.querySelector('tr.detail')).toBeNull();
-  });
-
-  it('shows the subscriptions alone when the application metrics are unavailable or fail', () => {
-    const disabled = setup({ usage: of({ ...APPLICATION_METRICS, status: DISABLED, apis: [] }) });
-    disabled.settle();
-    disabled.el.querySelector<HTMLElement>('tr.row')!.click();
-    disabled.fixture.detectChanges();
-    expect(Array.from(disabled.el.querySelectorAll('tr.detail thead th')).map((th) => th.textContent?.trim())).toEqual(['API', 'Version', 'Policy', 'Status']);
-    TestBed.resetTestingModule();
-
-    const failing = setup({ usage: throwError(() => new Error('down')) });
-    failing.settle();
-    failing.el.querySelector<HTMLElement>('tr.row')!.click();
-    failing.fixture.detectChanges();
-    expect(failing.el.querySelector('tr.detail')?.textContent).toContain('Subscribed APIs (2)');
-    expect(failing.el.querySelectorAll('tr.detail thead th').length).toBe(4);
-  });
-
-  it('reads the open drawers again when the period changes', () => {
-    const { el, fixture, applicationMetrics, store, settle } = setup();
-    settle();
+    expect(el.querySelector('button.chevron')).toBeNull();
     el.querySelector<HTMLElement>('tr.row')!.click();
     fixture.detectChanges();
-    applicationMetrics.calls.reset();
 
-    store.setPeriod('7d');
+    expect(panel.current()).toEqual(
+      jasmine.objectContaining({ kind: 'app', env: 'dev', id: 'a1', name: 'Mobile Banking', owner: 'a.martin', status: 'APPROVED' }),
+    );
+    expect(el.querySelector('tr.row')!.classList).toContain('is-sel');
+    expect(el.querySelector('tr.detail')).toBeNull();
+    // Le volet charge lui-même ses données : la page ne fait aucun appel de plus.
+    expect(subscriptionsOfApplication).not.toHaveBeenCalled();
+  });
+
+  it('quick filters select the applications with or without subscriptions, or without calls', () => {
+    const { fixture, el, settle } = setup();
     settle();
+    const chip = (label: string) => Array.from(el.querySelectorAll<HTMLButtonElement>('.chip')).find((c) => c.textContent?.includes(label))!;
+    const names = () => Array.from(el.querySelectorAll('tr.row .linkbtn')).map((b) => b.textContent?.trim());
 
-    expect(applicationMetrics).toHaveBeenCalledWith('dev', 'a1', '7d');
+    chip('No subscriptions').click();
+    fixture.detectChanges();
+    expect(names()).toEqual(['Sandbox']);
+    expect(chip('No subscriptions').getAttribute('aria-pressed')).toBe('true');
+
+    chip('With subscriptions').click();
+    fixture.detectChanges();
+    expect(names()).toEqual(['Mobile Banking']);
+
+    chip('All').click();
+    fixture.detectChanges();
+    expect(names()).toEqual(['Mobile Banking', 'Sandbox']);
   });
 });

@@ -3,6 +3,7 @@ package com.example.apiportal.api;
 import com.example.apiportal.api.ApiModels.ApiDetailDto;
 import com.example.apiportal.api.ApiModels.ApiDto;
 import com.example.apiportal.api.ApiModels.ApplicationDto;
+import com.example.apiportal.api.ApiModels.DeploymentDto;
 import com.example.apiportal.api.ApiModels.EnvironmentDto;
 import com.example.apiportal.api.ApiModels.OverviewDto;
 import com.example.apiportal.api.ApiModels.PortalDto;
@@ -26,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 class CatalogController {
 
     private static final int MAX_QUERY_LENGTH = 100;
+    private static final int MAX_DEPLOYMENTS = 100;
 
     private final CatalogQueryService queries;
     private final OverviewService overviews;
@@ -43,6 +45,15 @@ class CatalogController {
     @GetMapping("/portal")
     PortalDto portal() {
         return queries.portal();
+    }
+
+    /** Fil d'activité : derniers déploiements de révision, tous environnements confondus. */
+    @GetMapping("/deployments")
+    List<DeploymentDto> deployments(@RequestParam(defaultValue = "20") int limit) {
+        if (limit < 1 || limit > MAX_DEPLOYMENTS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        return queries.recentDeployments(limit);
     }
 
     @GetMapping("/environments/{environment}/overview")

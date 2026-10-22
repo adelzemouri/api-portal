@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Tone } from './format';
+import { TranslatePipe } from './i18n';
 
 export interface BarItem {
   key: string;
@@ -11,6 +12,10 @@ export interface BarItem {
   /** Lien de navigation du libellé, le cas échéant. */
   link?: string[];
   queryParams?: Record<string, string>;
+  /** Action du libellé (ouvrir le volet de détail) ; prioritaire sur le lien. */
+  action?: () => void;
+  /** Repère de la ligne d'origine du volet (surbrillance, retour du focus). */
+  from?: string;
 }
 
 /**
@@ -20,13 +25,15 @@ export interface BarItem {
 @Component({
   selector: 'app-bar-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   template: `
     <ul class="bars" [attr.aria-label]="label">
       @for (item of items; track item.key) {
-        <li class="bar-row" [attr.title]="tooltip(item)">
+        <li class="bar-row" [class.is-sel]="!!item.from && item.from === selected" [attr.title]="tooltip(item)">
           <span class="bar-label">
-            @if (item.link) {
+            @if (item.action) {
+              <button type="button" class="linkbtn" [attr.data-panel-from]="item.from ?? null" (click)="item.action()">{{ item.label }}</button>
+            } @else if (item.link) {
               <a [routerLink]="item.link" [queryParams]="item.queryParams">{{ item.label }}</a>
             } @else {
               {{ item.label }}
@@ -38,7 +45,7 @@ export interface BarItem {
           <span class="bar-value">{{ format(item.value) }}</span>
         </li>
       } @empty {
-        <li class="bar-empty">{{ empty }}</li>
+        <li class="bar-empty">{{ empty | t }}</li>
       }
     </ul>
   `,
@@ -47,6 +54,8 @@ export class BarListComponent {
   @Input({ required: true }) items: BarItem[] = [];
   @Input({ required: true }) label = '';
   @Input() empty = 'No data';
+  /** Ligne d'origine du volet ouvert, mise en surbrillance. */
+  @Input() selected: string | null = null;
   /** Si renseigné, l'infobulle indique la part du total. */
   @Input() total: number | null = null;
   /** Mise en forme de la valeur affichée (compacte pour des appels, en % ou en ms pour d'autres mesures). */

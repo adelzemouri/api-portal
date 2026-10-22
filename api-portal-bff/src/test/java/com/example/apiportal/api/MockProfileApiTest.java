@@ -219,4 +219,17 @@ class MockProfileApiTest {
                     .doesNotContain("secret", "consumerkey", "password", "token", "attributes", "keys");
         }
     }
+
+    @Test
+    @DisplayName("GET /deployments : fil des derniers déploiements, borné entre 1 et 100")
+    void recentDeployments() throws Exception {
+        mvc.perform(get("/api/v1/deployments?limit=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(5))
+                .andExpect(jsonPath("$[0].environment").isNotEmpty())
+                .andExpect(jsonPath("$[0].revision").isNotEmpty())
+                .andExpect(jsonPath("$[0].deployedTime").isNotEmpty());
+        mvc.perform(get("/api/v1/deployments?limit=0")).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/deployments?limit=101")).andExpect(status().isBadRequest());
+    }
 }

@@ -55,4 +55,30 @@ describe('CopyButtonComponent', () => {
 
     expect(() => (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click()).not.toThrow();
   });
+
+  it('can carry its own caption and show what it copies on hover, without triggering the row behind it', fakeAsync(() => {
+    const writeText = jasmine.createSpy('writeText').and.resolveTo();
+    spyOnProperty(navigator, 'clipboard', 'get').and.returnValue({ writeText } as unknown as Clipboard);
+    const fixture = TestBed.createComponent(CaptionHostComponent);
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+
+    expect(button.textContent?.trim()).toBe('Copy internal URL');
+    expect(button.title).toBe('https://gw-int/payments');
+    button.click();
+    flushMicrotasks();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.rowClicks).toBe(0);
+    expect(button.textContent?.trim()).toBe('Copied');
+    tick(2000);
+  }));
 });
+
+@Component({
+  standalone: true,
+  imports: [CopyButtonComponent],
+  template: `<div (click)="rowClicks = rowClicks + 1"><app-copy-button text="https://gw-int/payments" caption="Copy internal URL" hint="https://gw-int/payments" /></div>`,
+})
+class CaptionHostComponent {
+  rowClicks = 0;
+}

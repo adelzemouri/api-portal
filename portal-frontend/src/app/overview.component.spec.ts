@@ -6,7 +6,9 @@ import { CatalogService } from './catalog.service';
 import { EnvironmentStore } from './environment.store';
 import { compactNumber } from './format';
 import { OverviewComponent } from './overview.component';
-import { DISABLED, METRICS_OVERVIEW, OVERVIEW, fakeStore } from './testing';
+import { CrossEnvIndex } from './cross-env';
+import { DetailPanel } from './detail-panel.service';
+import { DEPLOYMENTS, DISABLED, METRICS_OVERVIEW, OVERVIEW, fakeIndex, fakeStore } from './testing';
 
 describe('OverviewComponent', () => {
   function render(
@@ -14,13 +16,15 @@ describe('OverviewComponent', () => {
   ) {
     const overviewSpy = jasmine.createSpy('overview').and.returnValue(options.overview ?? of(OVERVIEW));
     const metricsSpy = jasmine.createSpy('metrics').and.returnValue(options.metrics ?? of(METRICS_OVERVIEW));
+    const deploymentsSpy = jasmine.createSpy('deployments').and.returnValue(of(DEPLOYMENTS));
     const store = fakeStore({ selected: options.selected ?? 'dev', portal: options.portal });
     TestBed.configureTestingModule({
       imports: [OverviewComponent],
       providers: [
         provideRouter([]),
-        { provide: CatalogService, useValue: { overview: overviewSpy, metrics: metricsSpy } },
+        { provide: CatalogService, useValue: { overview: overviewSpy, metrics: metricsSpy, deployments: deploymentsSpy } },
         { provide: EnvironmentStore, useValue: store },
+        { provide: CrossEnvIndex, useValue: fakeIndex() },
       ],
     });
     const fixture = TestBed.createComponent(OverviewComponent);
@@ -30,7 +34,7 @@ describe('OverviewComponent', () => {
       fixture.detectChanges();
     };
     flush();
-    return { fixture, el: fixture.nativeElement as HTMLElement, overviewSpy, metricsSpy, store, flush };
+    return { fixture, el: fixture.nativeElement as HTMLElement, overviewSpy, metricsSpy, deploymentsSpy, store, flush };
   }
 
   // Un texte par élément enfant : les espaces visibles viennent du CSS, absent des tests.
@@ -91,13 +95,60 @@ describe('OverviewComponent', () => {
     expect(bars(el, 'Top consumers')).toEqual([`Mobile Banking ${compactNumber(7000)}`, 'Legacy Batch 500']);
   });
 
-  it('links a ranking to the API page or the application, and leaves an unknown application unlinked', () => {
-    const { el } = render();
+  it('opens a ranked API or application in the side panel, and leaves an unknown application as plain text', () => {
+    const { fixture, el } = render();
+    const panel = TestBed.inject(DetailPanel);
 
-    expect(chart(el, 'Most called').querySelector('a')?.getAttribute('href')).toBe('/apis/dev/p-14');
+    chart(el, 'Most called').querySelector<HTMLButtonElement>('.linkbtn')!.click();
+    fixture.detectChanges();
+    expect(panel.current()).toEqual(jasmine.objectContaining({ kind: 'api', env: 'dev', id: 'p-14', name: 'Payments' }));
+    expect(chart(el, 'Most called').querySelector('.bar-row')?.classList).toContain('is-sel');
+
     const consumers = chart(el, 'Top consumers').querySelectorAll('.bar-row');
-    expect(consumers[0].querySelector('a')?.getAttribute('href')).toBe('/applications?q=Mobile%20Banking');
-    expect(consumers[1].querySelector('a')).toBeNull();
+    consumers[0].querySelector<HTMLButtonElement>('.linkbtn')!.click();
+    expect(panel.current()).toEqual(jasmine.objectContaining({ kind: 'app', id: 'a1', name: 'Mobile Banking' }));
+    expect(consumers[1].querySelector('.linkbtn, a')).toBeNull();
+  });
+
+  it('lists the latest deployments of every environment, a failed synchronization first, and filters them', () => {
+    const { fixture, el, deploymentsSpy } = render();
+    const items = () => Array.from(el.querySelectorAll('.feed-item')).map(childrenText);
+
+    expect(deploymentsSpy).toHaveBeenCalledWith(20);
+    expect(items()).toEqual([
+      'UAT UAT could not be synchronized: [uat] control plane unreachable. 2 minutes ago',
+      'EXP KYC Checks 1.0 Revision 3 deployed on Default, Internal 1 hour ago',
+      'DEV Payments 1.4 Revision 7 deployed on Default 2 hours ago',
+    ]);
+
+    Array.from(el.querySelectorAll<HTMLButtonElement>('.feed-grid .chip')).find((c) => c.textContent?.trim() === 'DEV')!.click();
+    fixture.detectChanges();
+    expect(items()).toEqual(['DEV Payments 1.4 Revision 7 deployed on Default 2 hours ago']);
+  });
+
+  it('opens a deployment in the side panel, in the environment where it happened', () => {
+    const { fixture, el } = render();
+    const panel = TestBed.inject(DetailPanel);
+
+    el.querySelector<HTMLButtonElement>('.feed .linkbtn')!.click();
+    fixture.detectChanges();
+
+    expect(panel.current()).toEqual(jasmine.objectContaining({ kind: 'api', env: 'exp', id: 'k-10', name: 'KYC Checks' }));
+    expect(el.querySelector('.feed-item.is-sel')?.textContent).toContain('KYC Checks');
+  });
+
+  it('lists the APIs not yet in production with their path, and opens one where it went furthest', () => {
+    const { fixture, el } = render();
+    const panel = TestBed.inject(DetailPanel);
+
+    expect(el.querySelector('#notprod-title')?.textContent).toBe('Not yet in EXP');
+    const rows = Array.from(el.querySelectorAll('.notprod li'));
+    expect(rows.map((r) => r.querySelector('.linkbtn')?.textContent)).toEqual(['Payments']);
+    expect(rows[0].querySelector('.dots')?.getAttribute('aria-label')).toBe('Deployed in DEV, SIM, UAT');
+
+    rows[0].querySelector<HTMLButtonElement>('.linkbtn')!.click();
+    fixture.detectChanges();
+    expect(panel.current()).toEqual(jasmine.objectContaining({ kind: 'api', env: 'dev', id: 'dev-p-14' }));
   });
 
   it('does not invent traffic when no source is configured: only the notice speaks, the catalog stays', () => {
@@ -185,7 +236,7 @@ describe('OverviewComponent', () => {
     const gateway = conn.querySelectorAll('.conn-line')[0];
     expect(gateway.textContent).toContain('Default');
     expect(gateway.textContent).toContain('https://gw-dev.bank.internal:8243');
-    expect(conn.querySelectorAll('app-copy-button').length).toBe(2);
+    expect(conn.querySelectorAll('app-copy-button').length).toBe(3);
     expect(Array.from(conn.querySelectorAll('a')).map((a) => a.getAttribute('href'))).toEqual([
       'https://apim-dev.bank.internal/publisher',
       'https://apim-dev.bank.internal/devportal',
