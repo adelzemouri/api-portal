@@ -1,9 +1,9 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { EMPTY, catchError, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
+import { EMPTY, catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { Api, Application, SearchResult } from './api.models';
 import { CatalogService } from './catalog.service';
+import { DetailPanel, PanelItem } from './detail-panel.service';
 import { EnvironmentStore } from './environment.store';
 import { lifeCycleLabel } from './format';
 import { I18nService, TranslatePipe } from './i18n';
@@ -13,8 +13,21 @@ interface Option {
   kind: 'API' | 'Application';
   title: string;
   detail: string;
-  link: unknown[];
-  query?: Record<string, string>;
+  item: PanelItem;
+}
+
+/** Chemin d'une URL de gateway collée dans la recherche (« https://gw…/payments/1.4/x » → « /payments/1.4/x ») ; sinon null. */
+export function gatewayPath(query: string): string | null {
+  const text = query.trim();
+  if (!/^https?:\/\//i.test(text)) {
+    return null;
+  }
+  try {
+    const path = new URL(text).pathname.replace(/\/+$/, '');
+    return path && path !== '/' ? path : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Recherche globale (Ctrl/⌘ + K) : les premières API et applications de l'environnement affiché. */
@@ -44,7 +57,7 @@ interface Option {
               aria-controls="palette-results"
               [attr.aria-expanded]="options().length > 0"
               [attr.aria-activedescendant]="options().length ? 'palette-option-' + active() : null"
-              [placeholder]="'Search APIs and applications in {env}' | t: { env: store.selected()?.label ?? '' }"
+              [placeholder]="'Search an API, an application, or paste a gateway URL ({env})' | t: { env: store.selected()?.label ?? '' }"
               [value]="query()"
               (input)="query.set(valueOf($event))"
             />
@@ -74,7 +87,7 @@ interface Option {
 })
 export class SearchPaletteComponent implements OnChanges {
   private readonly catalog = inject(CatalogService);
-  private readonly router = inject(Router);
+  private readonly panel = inject(DetailPanel);
   readonly store = inject(EnvironmentStore);
   private readonly i18n = inject(I18nService);
 
@@ -115,6 +128,17 @@ export class SearchPaletteComponent implements OnChanges {
           const environment = this.store.selectedKey();
           if (!query.trim() || !environment) {
             return of<SearchResult>({ apis: [], applications: [] });
+          }
+          // URL collée : on cherche par le premier segment, puis on garde l'API dont le contexte préfixe le chemin.
+          const path = gatewayPath(query);
+          if (path) {
+            return this.catalog.search(environment, '/' + path.split('/').filter(Boolean)[0]).pipe(
+              map((result) => ({
+                apis: result.apis.filter((api) => path === api.context || path.startsWith(api.context + '/')),
+                applications: [],
+              })),
+              catchError(() => EMPTY),
+            );
           }
           return this.catalog.search(environment, query).pipe(catchError(() => EMPTY));
         }),
@@ -168,7 +192,8 @@ export class SearchPaletteComponent implements OnChanges {
 
   choose(option: Option): void {
     this.close();
-    void this.router.navigate(option.link, option.query ? { queryParams: option.query } : undefined);
+    // Le détail s'ouvre dans le volet, sans quitter la page en cours.
+    this.panel.open(option.item);
   }
 
   close(): void {
@@ -185,7 +210,7 @@ export class SearchPaletteComponent implements OnChanges {
       kind: 'API',
       title: `${api.name} ${api.version}`,
       detail: `${lifeCycleLabel(api.lifeCycleStatus)} · ${api.context}`,
-      link: ['/apis', this.store.selectedKey(), api.apiId],
+      item: { kind: 'api', env: this.store.selectedKey(), id: api.apiId, name: api.name, version: api.version },
     };
   }
 
@@ -195,8 +220,7 @@ export class SearchPaletteComponent implements OnChanges {
       kind: 'Application',
       title: app.name,
       detail: app.owner ?? '',
-      link: ['/applications'],
-      query: { q: app.name },
+      item: { kind: 'app', env: this.store.selectedKey(), id: app.applicationId, name: app.name, owner: app.owner, status: app.status },
     };
   }
 }

@@ -1,10 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { ApiMetrics } from './api.models';
 import { ApiPageComponent } from './api-page.component';
 import { CatalogService } from './catalog.service';
+import { DetailPanel } from './detail-panel.service';
 import { EnvironmentStore } from './environment.store';
 import { compactNumber } from './format';
 import { API_DETAIL, API_METRICS, DISABLED, SUBSCRIPTIONS, fakeStore } from './testing';
@@ -39,11 +40,9 @@ describe('ApiPageComponent', () => {
       TestBed.flushEffects();
       fixture.detectChanges();
     };
-    const openTab = (label: string) => {
-      Array.from(el.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find((t) => t.textContent?.trim() === label)!.click();
-      fixture.detectChanges();
-    };
-    return { fixture, el, apiDetail, subscriptionsOfApi, apiMetrics, paramMap, store, settle, openTab };
+    const router = TestBed.inject(Router);
+    const navigate = spyOn(router, 'navigate').and.resolveTo(true);
+    return { fixture, el, apiDetail, subscriptionsOfApi, apiMetrics, paramMap, store, settle, navigate };
   }
 
   const childrenText = (el: Element) => Array.from(el.children).map((c) => c.textContent?.replace(/\s+/g, ' ').trim()).filter(Boolean).join(' ');
@@ -89,11 +88,10 @@ describe('ApiPageComponent', () => {
     expect(el.querySelector('app-time-series')).toBeNull();
   });
 
-  it('opens on the traffic: calls and errors over time, top consumers, errors by kind', () => {
+  it('shows the traffic: calls and errors over time, top consumers (opened in the side panel), errors by kind', () => {
     const { el, settle } = setup();
     settle();
 
-    expect(el.querySelector('[role="tab"][aria-selected="true"]')?.textContent?.trim()).toBe('Traffic');
     const charts = el.querySelectorAll('app-time-series');
     expect(charts.length).toBe(2);
     expect(charts[1].querySelector('.ts')?.getAttribute('data-tone')).toBe('err');
@@ -101,7 +99,8 @@ describe('ApiPageComponent', () => {
       Array.from(Array.from(el.querySelectorAll('.chart')).find((c) => c.querySelector('h4')?.textContent?.startsWith(title))!.querySelectorAll('.bar-row')).map(childrenText);
     expect(bars('Top consumers')).toEqual([`Mobile Banking ${compactNumber(6000)}`, `Legacy Batch ${compactNumber(2000)}`]);
     expect(bars('Errors by kind')).toEqual(['Client errors (4xx) 200', 'Server errors (5xx) 40']);
-    expect(el.querySelector('.chart .bar-row a')?.getAttribute('href')).toBe('/applications?q=Mobile%20Banking');
+    el.querySelector<HTMLButtonElement>('.chart .bar-row .linkbtn')!.click();
+    expect(TestBed.inject(DetailPanel).current()).toEqual(jasmine.objectContaining({ kind: 'app', env: 'dev', id: 'a1', name: 'Mobile Banking' }));
     expect(el.querySelector('app-period-switch')).not.toBeNull();
   });
 
@@ -137,22 +136,23 @@ describe('ApiPageComponent', () => {
     expect(apiMetrics).toHaveBeenCalledOnceWith('dev', 'p-14', '7d');
   });
 
-  it('has four sections, each in its own tab', () => {
-    const { el, settle, openTab } = setup();
+  it('shows every section at once, without tabs', () => {
+    const { el, settle } = setup();
     settle();
 
-    expect(Array.from(el.querySelectorAll('[role="tab"]')).map((t) => t.textContent?.trim())).toEqual(['Traffic', 'Endpoints', 'Consumers', 'Deployment']);
-    openTab('Deployment');
-    expect(el.querySelector('[role="tab"][aria-selected="true"]')?.textContent?.trim()).toBe('Deployment');
-    expect(el.querySelector('[role="tabpanel"]')?.id).toBe('panel-deployment');
-    expect(el.querySelector('app-time-series')).toBeNull();
+    expect(el.querySelector('[role="tab"]')).toBeNull();
+    expect(Array.from(el.querySelectorAll('section[id^="panel-"]')).map((p) => p.id)).toEqual([
+      'panel-path',
+      'panel-traffic',
+      'panel-endpoints',
+      'panel-consumers',
+      'panel-deployment',
+    ]);
   });
 
   it('gives the full URL of the API on each gateway, ready to copy, and where to get a token', () => {
-    const { el, settle, openTab } = setup();
+    const { el, settle } = setup();
     settle();
-
-    openTab('Endpoints');
 
     const panel = el.querySelector('#panel-endpoints')!;
     expect(Array.from(panel.querySelectorAll('.url-list li')).map((li) => Array.from(li.children).map((c) => c.textContent?.trim()).slice(0, 2))).toEqual([
@@ -165,20 +165,16 @@ describe('ApiPageComponent', () => {
   });
 
   it('says so when no gateway serves the API', () => {
-    const { el, apiDetail, settle, openTab } = setup();
+    const { el, apiDetail, settle } = setup();
     apiDetail.and.returnValue(of({ ...API_DETAIL, gatewayUrls: [] }));
     settle();
-
-    openTab('Endpoints');
 
     expect(el.querySelector('#panel-endpoints')?.textContent).toContain('No gateway serves this API yet');
   });
 
   it('lists who is impacted by a change, with the calls each application makes', () => {
-    const { el, settle, openTab } = setup();
+    const { el, settle } = setup();
     settle();
-
-    openTab('Consumers');
 
     expect(el.querySelector('#panel-consumers .lede')?.textContent?.replace(/\s+/g, ' ')).toContain('2 subscribed applications, 2 owners to contact');
     const rows = Array.from(el.querySelectorAll('#panel-consumers tbody tr')).map((r) => Array.from(r.children).map((c) => c.textContent?.trim()));
@@ -189,37 +185,56 @@ describe('ApiPageComponent', () => {
   });
 
   it('leaves out the call columns of the impact table when there are no metrics', () => {
-    const { el, settle, openTab } = setup('dev', 'p-14', of({ ...API_METRICS, status: DISABLED, metrics: null, timeline: [], consumers: [] }));
+    const { el, settle } = setup('dev', 'p-14', of({ ...API_METRICS, status: DISABLED, metrics: null, timeline: [], consumers: [] }));
     settle();
-
-    openTab('Consumers');
 
     expect(Array.from(el.querySelectorAll('#panel-consumers thead th')).map((th) => th.textContent?.trim())).toEqual(['Application', 'Owner', 'Subscriber', 'Policy', 'Status']);
   });
 
   it('says so when nobody subscribes: changing the API affects nobody', () => {
-    const { el, subscriptionsOfApi, settle, openTab } = setup();
+    const { el, subscriptionsOfApi, settle } = setup();
     subscriptionsOfApi.and.returnValue(of([]));
     settle();
-
-    openTab('Consumers');
 
     expect(el.textContent).toContain('changing it affects nobody in DEV');
     expect(Array.from(el.querySelectorAll('button')).some((b) => b.textContent === 'Copy contacts')).toBeFalse();
   });
 
-  it('shows the deployment and links every version to its own page in the other environments', () => {
-    const { el, settle, openTab } = setup();
+  it('shows the deployment, and the path of the API through the four environments', () => {
+    const { el, settle } = setup();
     settle();
 
-    openTab('Deployment');
-
     expect(el.querySelector('#deploy-title')?.parentElement?.textContent).toContain('gw-int-dev.bank.internal');
-    const links = Array.from(el.querySelectorAll('.presence-list a')).map((a) => a.getAttribute('href'));
-    expect(links).toEqual(['/apis/dev/p-14', '/apis/sim/s-13', '/apis/sim/s-110', '/apis/uat/u-13']);
-    expect(el.querySelector('.presence-list a[aria-current="page"]')?.textContent).toBe('1.4');
-    expect(el.querySelector('.presence-list li.current')?.textContent).toContain('DEV');
-    expect(el.querySelector('.presence-list .stale')?.textContent).toBe('outdated');
+    const stations = Array.from(el.querySelectorAll('#panel-path .station button')).map((b) => b.getAttribute('aria-label'));
+    expect(stations).toEqual(['DEV: version 1.4', 'SIM: version 1.3, 1.10', 'UAT: version 1.3', 'EXP: not deployed']);
+    expect(el.querySelector('#panel-path .station.current')?.textContent).toContain('DEV');
+    expect(el.querySelector('#panel-path .stale')?.textContent).toBe('outdated');
+  });
+
+  it('follows the header: another environment opens the same API there, with the same version when it exists', () => {
+    const { el, store, settle, navigate } = setup();
+    settle();
+
+    store.select('sim');
+    settle();
+    expect(navigate).toHaveBeenCalledOnceWith(['/apis', 'sim', 's-13'], { replaceUrl: true });
+
+    navigate.calls.reset();
+    el.querySelectorAll<HTMLButtonElement>('#panel-path .station button')[2].click();
+    settle();
+    expect(navigate).toHaveBeenCalledOnceWith(['/apis', 'uat', 'u-13'], { replaceUrl: true });
+  });
+
+  it('says so, and stays on its page, when the API is not deployed in the environment chosen in the header', () => {
+    const { el, store, settle, navigate } = setup();
+    settle();
+
+    store.select('exp');
+    settle();
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(el.querySelector('.banner[role="status"]')?.textContent).toContain('This API is not deployed in EXP. Showing DEV.');
+    expect(el.querySelector('h2')?.textContent).toContain('Payments');
   });
 
   it('opens Publisher and Devportal only when the environment has configured them, in a new tab without opener', () => {
@@ -240,10 +255,9 @@ describe('ApiPageComponent', () => {
   });
 
   it('copies the contacts, one line per owner with their applications', async () => {
-    const { fixture, el, settle, openTab } = setup();
+    const { fixture, el, settle } = setup();
     settle();
     const writeText = clipboard();
-    openTab('Consumers');
 
     Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent === 'Copy contacts')!.click();
     await flushPromises();

@@ -4,7 +4,7 @@
  */
 export const FR: Record<string, string> = {
   // Cadre de l'application
-  'API Hub, home': 'API Hub, accueil',
+  'API Portal, home': 'API Portal, accueil',
   Main: 'Navigation principale',
   Overview: 'Accueil',
   APIs: 'API',
@@ -338,4 +338,49 @@ export const FR: Record<string, string> = {
   'Ready to use.': 'Prête à être utilisée.',
   'Created, waiting for approval.': "Créée, en attente d'approbation.",
   'Refused.': 'Refusée.',
+
+  // Style Panorama : volet de détail, parcours, fil des déploiements
+  Sync: 'Synchro',
+  'Your APIs at a glance': "Vos API d'un coup d'œil",
+  'How your APIs are used in this environment, what was deployed lately, and how to reach them.':
+    'Comment vos API sont utilisées dans cet environnement, ce qui a été déployé récemment, et comment les joindre.',
+  'Latest deployments': 'Derniers déploiements',
+  'Filter by environment': 'Filtrer par environnement',
+  'No deployment recorded.': 'Aucun déploiement enregistré.',
+  '{revision} deployed on {gateways}': '{revision} déployée sur {gateways}',
+  'Not yet in {env}': 'Pas encore en {env}',
+  'APIs deployed in a test environment but not in production.': 'API déployées dans un environnement de test mais pas en production.',
+  'Every API is in production.': 'Toutes les API sont en production.',
+  '{n} more in the APIs page.': '{n} de plus dans la page API.',
+  'Catalog · {n} APIs in {env}': 'Catalogue · {n} API en {env}',
+  'Every API in this environment, its traffic and its path to production. Select an API to see its details next to the list; the internal gateway URL can be copied straight from the row.':
+    "Toutes les API de l'environnement, leur trafic et leur parcours jusqu'à la production. Cliquez sur une API pour voir son détail à côté de la liste ; l'URL de la gateway interne se copie directement depuis la ligne.",
+  '{n} applications in {env}': '{n} applications en {env}',
+  'Every application registered in this environment, whoever owns it. Select one to see the APIs it consumes next to the list.':
+    "Toutes les applications de l'environnement, quel que soit leur propriétaire. Cliquez sur une application pour voir les API qu'elle consomme à côté de la liste.",
+  'Quick filters': 'Filtres rapides',
+  Path: 'Parcours',
+  'Path to production': "Parcours jusqu'à la production",
+  'Copy internal URL': "Copier l'URL interne",
+  'Internal gateway {env}': 'Gateway interne {env}',
+  'internal URL of {name}': "l'URL interne de {name}",
+  'internal gateway URL': "l'URL de la gateway interne",
+  'Deployed in {envs}': 'Déployée en {envs}',
+  'Not deployed': 'Non déployée',
+  'not deployed': 'non déployée',
+  '{env}: not deployed': '{env} : non déployée',
+  '{env}: version {version}': '{env} : version {version}',
+  'deployed {ago}': 'déployée {ago}',
+  Back: 'Retour',
+  'Close the panel': 'Fermer le volet',
+  'Owner: {name}': 'Propriétaire : {name}',
+  'Consumers ({n})': 'Consommateurs ({n})',
+  'No traffic figures for this environment.': 'Pas de chiffres de trafic pour cet environnement.',
+  'No call from this application in the period.': "Aucun appel de cette application sur la période.",
+  'Unable to load the details.': 'Impossible de charger le détail.',
+  '{name} is not deployed in {env}.': "{name} n'est pas déployée en {env}.",
+  '{name} does not exist in {env}.': "{name} n'existe pas en {env}.",
+  'Choose another environment in the header.': "Choisissez un autre environnement dans l'en-tête.",
+  'This API is not deployed in {env}. Showing {current}.': "Cette API n'est pas déployée en {env}. Fiche affichée : {current}.",
+  'Search an API, an application, or paste a gateway URL ({env})': 'Rechercher une API, une application, ou coller une URL de gateway ({env})',
 };

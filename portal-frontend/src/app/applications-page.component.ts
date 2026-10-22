@@ -1,37 +1,32 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { EMPTY, catchError, combineLatest, filter, forkJoin, of, switchMap, tap } from 'rxjs';
-import { AppMetric, AppMetricsList, Application, ApplicationRow, Subscription, Usage } from './api.models';
+import { ActivatedRoute } from '@angular/router';
+import { EMPTY, catchError, combineLatest, filter, switchMap, tap } from 'rxjs';
+import { AppMetric, AppMetricsList, Application, ApplicationRow } from './api.models';
 import { CatalogService } from './catalog.service';
+import { DetailPanel } from './detail-panel.service';
 import { EnvironmentStore, LoadState } from './environment.store';
-import { Expansion } from './expansion';
-import { applicationStatusLabel, compactNumber, formatInt, formatPercent, subscriptionStatusLabel } from './format';
+import { applicationStatusLabel, compactNumber, formatInt, formatPercent } from './format';
 import { TranslatePipe } from './i18n';
 import { ApplicationsView } from './list-views';
 import { MetricsNoticeComponent } from './metrics-notice.component';
 import { PagerComponent } from './pager.component';
 import { PeriodSwitchComponent } from './period-switch.component';
 
-interface ApplicationExpansion {
-  subscriptions: Subscription[];
-  /** Appels par API sur la période ; nul si les métriques ne sont pas disponibles. */
-  usage: Usage[] | null;
-}
-
 /**
  * Applications de l'environnement sélectionné, tous propriétaires (Admin API WSO2, via le BFF), avec leur trafic :
- * recherche, filtres, tri, pagination ; chaque application se déplie sur les API auxquelles elle est souscrite.
+ * recherche, filtres, tri, pagination. Un clic ouvre le volet de détail (API souscrites) à côté de la liste.
  */
 @Component({
   selector: 'app-applications-page',
   standalone: true,
-  imports: [MetricsNoticeComponent, PagerComponent, PeriodSwitchComponent, RouterLink, TranslatePipe],
+  imports: [MetricsNoticeComponent, PagerComponent, PeriodSwitchComponent, TranslatePipe],
   template: `
     <div class="page-head page-head-row">
       <div>
-        <h2>{{ 'Applications' | t }} <span class="page-env">{{ store.selected()?.label }}</span></h2>
-        <p class="lede">{{ 'Every application registered in this environment, whoever owns it. Select a row to see the APIs it consumes.' | t }}</p>
+        <p class="eyebrow">{{ '{n} applications in {env}' | t: { n: all().length, env: store.selected()?.label ?? '' } }}</p>
+        <h1 class="page-title">{{ 'Applications' | t }}</h1>
+        <p class="lede">{{ 'Every application registered in this environment, whoever owns it. Select one to see the APIs it consumes next to the list.' | t }}</p>
       </div>
       <app-period-switch />
     </div>
@@ -40,40 +35,29 @@ interface ApplicationExpansion {
 
     <div class="panel">
       <div class="toolbar">
-        <label class="search">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-          <input type="search" [attr.aria-label]="'Filter applications' | t" [placeholder]="'Filter by application or owner' | t" [value]="view.query()" (input)="view.setQuery(valueOf($event))" />
-        </label>
-        <label class="filter">
-          <span>{{ 'Status' | t }}</span>
-          <select [value]="view.status()" (change)="view.setStatus(valueOf($event))">
-            <option value="">{{ 'All' | t }}</option>
-            @for (status of statuses(); track status) {
-              <option [value]="status" [selected]="status === view.status()">{{ applicationStatus(status) }}</option>
-            }
-          </select>
-        </label>
-        <label class="filter">
-          <span>{{ 'Subscriptions' | t }}</span>
-          <select [value]="view.subscribers()" (change)="view.setSubscribers(valueOf($event))">
-            <option value="all">{{ 'Any' | t }}</option>
-            <option value="with">{{ 'With subscriptions' | t }}</option>
-            <option value="without">{{ 'No subscriptions' | t }}</option>
-          </select>
-        </label>
-        @if (hasMetrics()) {
+        <div class="chips" role="group" [attr.aria-label]="'Quick filters' | t">
+          <button type="button" class="chip" [attr.aria-pressed]="view.subscribers() === 'all' && view.traffic() === 'all' && !view.status()" (click)="quick('all')">{{ 'All' | t }} <span class="chip-n">{{ all().length }}</span></button>
+          <button type="button" class="chip" [attr.aria-pressed]="view.subscribers() === 'with'" (click)="quick('with')">{{ 'With subscriptions' | t }}</button>
+          <button type="button" class="chip" [attr.aria-pressed]="view.subscribers() === 'without'" (click)="quick('without')">{{ 'No subscriptions' | t }}</button>
+          @if (hasMetrics()) {
+            <button type="button" class="chip" [attr.aria-pressed]="view.traffic() === 'without'" (click)="quick('quiet')">{{ 'No call' | t }}</button>
+          }
+        </div>
+        <div class="toolbar-end">
           <label class="filter">
-            <span>{{ 'Traffic' | t }}</span>
-            <select [value]="view.traffic()" (change)="view.setTraffic(valueOf($event))">
-              <option value="all">{{ 'Any' | t }}</option>
-              <option value="with">{{ 'Active' | t }}</option>
-              <option value="without">{{ 'No call' | t }}</option>
+            <span>{{ 'Status' | t }}</span>
+            <select [value]="view.status()" (change)="view.setStatus(valueOf($event))">
+              <option value="">{{ 'All' | t }}</option>
+              @for (status of statuses(); track status) {
+                <option [value]="status" [selected]="status === view.status()">{{ applicationStatus(status) }}</option>
+              }
             </select>
           </label>
-        }
-        @if (view.active()) {
-          <button type="button" class="link-btn" (click)="view.reset()">{{ 'Clear filters' | t }}</button>
-        }
+          <label class="search">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+            <input type="search" [attr.aria-label]="'Filter applications' | t" [placeholder]="'Filter by application or owner' | t" [value]="view.query()" (input)="view.setQuery(valueOf($event))" />
+          </label>
+        </div>
       </div>
 
       @switch (state()) {
@@ -85,7 +69,12 @@ interface ApplicationExpansion {
         }
         @default {
           @if (window().total === 0) {
-            <p class="state-msg">{{ (view.active() ? 'No application matches these filters.' : 'No application in this environment.') | t }}</p>
+            <p class="state-msg">
+              {{ (view.active() ? 'No application matches these filters.' : 'No application in this environment.') | t }}
+              @if (view.active()) {
+                <button type="button" class="link-btn" (click)="view.reset()">{{ 'Clear filters' | t }}</button>
+              }
+            </p>
           } @else {
             <div class="table-wrap" tabindex="0" role="region" [attr.aria-label]="'Applications' | t">
               <table class="list">
@@ -96,88 +85,27 @@ interface ApplicationExpansion {
                     <th scope="col" [attr.aria-sort]="view.table.ariaSort('status')"><button type="button" class="sort" (click)="view.table.toggleSort('status')">{{ 'Status' | t }} <span aria-hidden="true">{{ view.table.arrow('status') }}</span></button></th>
                     @if (hasMetrics()) {
                       <th scope="col" class="num" [attr.aria-sort]="view.table.ariaSort('calls')"><button type="button" class="sort" (click)="view.table.toggleSort('calls')">{{ 'Calls' | t }} <span aria-hidden="true">{{ view.table.arrow('calls') }}</span></button></th>
-                      <th scope="col" class="num" [attr.aria-sort]="view.table.ariaSort('errorRate')"><button type="button" class="sort" (click)="view.table.toggleSort('errorRate')">{{ 'Error rate' | t }} <span aria-hidden="true">{{ view.table.arrow('errorRate') }}</span></button></th>
+                      <th scope="col" class="num" [attr.aria-sort]="view.table.ariaSort('errorRate')"><button type="button" class="sort" (click)="view.table.toggleSort('errorRate')">{{ 'Errors' | t }} <span aria-hidden="true">{{ view.table.arrow('errorRate') }}</span></button></th>
                     }
                     <th scope="col" class="num" [attr.aria-sort]="view.table.ariaSort('subscribers')"><button type="button" class="sort" (click)="view.table.toggleSort('subscribers')">{{ 'Subscribed APIs' | t }} <span aria-hidden="true">{{ view.table.arrow('subscribers') }}</span></button></th>
-                    <th scope="col" class="actions"><span class="sr-only">{{ 'Show details' | t }}</span></th>
                   </tr>
                 </thead>
-                @for (app of window().rows; track app.applicationId) {
-                  <tbody [class.open]="expansion.isOpen(app.applicationId)">
-                    <tr class="row" (click)="expansion.toggle(app.applicationId)">
-                      <th scope="row">{{ app.name }}</th>
+                <tbody>
+                  @for (app of window().rows; track app.applicationId) {
+                    <tr class="row" [class.is-sel]="panel.isSelected(from(app))" (click)="open(app)">
+                      <th scope="row">
+                        <button type="button" class="linkbtn" [attr.data-panel-from]="from(app)" [attr.aria-expanded]="panel.isSelected(from(app))" (click)="open(app); $event.stopPropagation()">{{ app.name }}</button>
+                      </th>
                       <td>{{ app.owner ?? '—' }}</td>
                       <td><span class="pill" [attr.data-status]="app.status">{{ applicationStatus(app.status) }}</span></td>
                       @if (hasMetrics()) {
                         <td class="num" [attr.title]="app.calls ? ('{n} calls' | t: { n: int(app.calls) }) : null">{{ app.calls ? compact(app.calls) : '—' }}</td>
-                        <td class="num">{{ app.calls ? percent(app.errorRate) : '—' }}</td>
+                        <td class="num"><span [class.err-hi]="app.calls && app.errorRate >= 0.02">{{ app.calls ? percent(app.errorRate) : '—' }}</span></td>
                       }
                       <td class="num">{{ app.subscriptionCount }}</td>
-                      <td class="actions">
-                        <button
-                          type="button"
-                          class="chevron"
-                          [attr.aria-expanded]="expansion.isOpen(app.applicationId)"
-                          [attr.aria-controls]="'app-' + app.applicationId"
-                          [attr.aria-label]="'Subscriptions of {name}' | t: { name: app.name }"
-                        >
-                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
-                        </button>
-                      </td>
                     </tr>
-                    @if (expansion.isOpen(app.applicationId)) {
-                      <tr class="detail" [id]="'app-' + app.applicationId">
-                        <td [attr.colspan]="hasMetrics() ? 7 : 5">
-                          @switch (expansion.detail(app.applicationId)?.status) {
-                            @case ('ready') {
-                              @if (dataOf(app.applicationId); as data) {
-                                @if (data.subscriptions.length === 0) {
-                                  <p class="detail-msg">{{ 'This application is not subscribed to any API.' | t }}</p>
-                                } @else {
-                                  <h3>{{ 'Subscribed APIs ({n})' | t: { n: data.subscriptions.length } }}</h3>
-                                  <table class="sub-list">
-                                    <thead>
-                                      <tr>
-                                        <th scope="col">API</th>
-                                        <th scope="col">Version</th>
-                                        <th scope="col">{{ 'Policy' | t }}</th>
-                                        <th scope="col">{{ 'Status' | t }}</th>
-                                        @if (data.usage) {
-                                          <th scope="col" class="num">{{ 'Calls' | t }}</th>
-                                          <th scope="col" class="num">{{ 'Error rate' | t }}</th>
-                                        }
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      @for (sub of data.subscriptions; track sub.subscriptionId) {
-                                        <tr>
-                                          <th scope="row"><a [routerLink]="['/apis', store.selectedKey(), sub.apiId]">{{ sub.apiName }}</a></th>
-                                          <td class="mono">{{ sub.apiVersion }}</td>
-                                          <td>{{ sub.throttlingPolicy }}</td>
-                                          <td><span class="pill" [attr.data-status]="sub.status">{{ subscriptionStatus(sub.status) }}</span></td>
-                                          @if (data.usage) {
-                                            <td class="num">{{ usageOf(data, sub) ? compact(usageOf(data, sub)!.calls) : '—' }}</td>
-                                            <td class="num">{{ usageOf(data, sub) ? percent(usageOf(data, sub)!.errorRate) : '—' }}</td>
-                                          }
-                                        </tr>
-                                      }
-                                    </tbody>
-                                  </table>
-                                }
-                              }
-                            }
-                            @case ('error') {
-                              <p class="detail-msg banner-error" role="alert">{{ 'Unable to load the subscriptions.' | t }}</p>
-                            }
-                            @default {
-                              <p class="detail-msg">{{ 'Loading…' | t }}</p>
-                            }
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                }
+                  }
+                </tbody>
               </table>
             </div>
             <app-pager [view]="view.table" [window]="window()" [noun]="'applications' | t" />
@@ -191,6 +119,7 @@ export class ApplicationsPageComponent {
   private readonly catalog = inject(CatalogService);
   readonly store = inject(EnvironmentStore);
   readonly view = inject(ApplicationsView);
+  readonly panel = inject(DetailPanel);
 
   readonly all = signal<Application[]>([]);
   readonly metrics = signal<AppMetricsList | null>(null);
@@ -217,18 +146,6 @@ export class ApplicationsPageComponent {
   readonly statuses = computed(() => [...new Set(this.all().map((app) => app.status))].sort());
   readonly window = computed(() => this.view.table.slice(this.view.table.sort(this.view.filter(this.rows()))));
 
-  readonly expansion = new Expansion<ApplicationExpansion>((applicationId) => {
-    const environment = this.store.selectedKey();
-    return forkJoin({
-      subscriptions: this.catalog.subscriptionsOfApplication(environment, applicationId),
-      // Les métriques complètent le détail : sans elles (ou en panne), on montre les souscriptions seules.
-      usage: this.catalog.applicationMetrics(environment, applicationId, this.store.period()).pipe(
-        switchMap((m) => of(m.status.state === 'OK' || (m.status.state === 'ERROR' && m.status.lastSuccessAt) ? m.apis : null)),
-        catchError(() => of(null)),
-      ),
-    });
-  }, inject(DestroyRef));
-
   readonly compact = compactNumber;
   readonly percent = formatPercent;
   readonly int = formatInt;
@@ -253,7 +170,6 @@ export class ApplicationsPageComponent {
             this.loadedEnvironment = environment;
             this.view.enter(environment);
             this.applyLinkQuery();
-            this.expansion.clear();
             this.all.set([]);
             this.metrics.set(null);
             this.state.set('loading');
@@ -272,7 +188,6 @@ export class ApplicationsPageComponent {
       .subscribe((applications) => {
         this.all.set(applications);
         this.state.set('ready');
-        this.expansion.reload();
       });
 
     combineLatest([toObservable(this.store.selectedKey), toObservable(this.store.period), toObservable(this.store.refreshTick)])
@@ -281,10 +196,7 @@ export class ApplicationsPageComponent {
         switchMap(([environment, period]) => this.catalog.applicationMetricsList(environment, period).pipe(catchError(() => EMPTY))),
         takeUntilDestroyed(),
       )
-      .subscribe((list) => {
-        this.metrics.set(list);
-        this.expansion.reload();
-      });
+      .subscribe((list) => this.metrics.set(list));
   }
 
   private applyLinkQuery(): void {
@@ -294,21 +206,22 @@ export class ApplicationsPageComponent {
     }
   }
 
-  dataOf(applicationId: string): ApplicationExpansion | null {
-    const detail = this.expansion.detail(applicationId);
-    return detail?.status === 'ready' ? detail.data : null;
+  from(app: Application): string {
+    return 'app-' + app.applicationId;
   }
 
-  usageOf(data: ApplicationExpansion, sub: Subscription): Usage | undefined {
-    return data.usage?.find((u) => u.apiId === sub.apiId);
+  open(app: Application): void {
+    this.panel.open({ kind: 'app', env: this.store.selectedKey(), id: app.applicationId, name: app.name, owner: app.owner, status: app.status, from: this.from(app) });
+  }
+
+  quick(kind: 'all' | 'with' | 'without' | 'quiet'): void {
+    this.view.setStatus('');
+    this.view.setSubscribers(kind === 'with' || kind === 'without' ? kind : 'all');
+    this.view.setTraffic(kind === 'quiet' ? 'without' : 'all');
   }
 
   applicationStatus(status: string): string {
     return applicationStatusLabel(status);
-  }
-
-  subscriptionStatus(status: string): string {
-    return subscriptionStatusLabel(status);
   }
 
   valueOf(event: Event): string {

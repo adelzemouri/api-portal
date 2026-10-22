@@ -4,6 +4,18 @@ import { Environment, Period, PortalInfo } from './api.models';
 
 export type LoadState = 'loading' | 'ready' | 'error';
 
+/** Clé du stockage local : l'environnement choisi est retrouvé d'une visite à l'autre. */
+export const ENV_STORAGE_KEY = 'api-portal.environment';
+
+function readStoredEnvironment(): string {
+  try {
+    return localStorage.getItem(ENV_STORAGE_KEY) ?? '';
+  } catch {
+    // Stockage bloqué (navigation privée, politique du poste) : on repart du premier environnement.
+    return '';
+  }
+}
+
 /**
  * État partagé : environnement sélectionné, statut de synchro de chaque environnement, horloge d'affichage
  * et signal d'actualisation auquel les cartes se rattachent.
@@ -15,7 +27,7 @@ export class EnvironmentStore {
   readonly environments = signal<Environment[]>([]);
   readonly state = signal<LoadState>('loading');
   /** Clé de l'environnement affiché ; vide tant que la liste n'est pas chargée. */
-  readonly selectedKey = signal('');
+  readonly selectedKey = signal(readStoredEnvironment());
   readonly selected = computed(() => this.environments().find((env) => env.key === this.selectedKey()));
   /** Incrémenté à chaque actualisation : les pages rechargent leurs données. */
   readonly refreshTick = signal(0);
@@ -59,6 +71,11 @@ export class EnvironmentStore {
 
   select(key: string): void {
     this.selectedKey.set(key);
+    try {
+      localStorage.setItem(ENV_STORAGE_KEY, key);
+    } catch {
+      // Préférence de confort seulement : sans stockage, le choix vaut pour la session.
+    }
   }
 
   labelOf(key: string): string {

@@ -2,12 +2,15 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { EMPTY, catchError, combineLatest, filter, switchMap, tap } from 'rxjs';
-import { ApiMetric, Count, Environment, MetricsOverview, Overview } from './api.models';
+import { Api, ApiMetric, Count, Deployment, Environment, MetricsOverview, Overview } from './api.models';
 import { BarItem, BarListComponent } from './bar-list.component';
 import { CatalogService } from './catalog.service';
 import { CopyButtonComponent } from './copy-button.component';
+import { CrossEnvIndex, productionKey } from './cross-env';
+import { DetailPanel } from './detail-panel.service';
+import { EnvDotsComponent } from './env-path.component';
 import { EnvironmentStore, LoadState } from './environment.store';
-import { compactNumber, formatInt, formatMs, formatPercent, formatRelative, statusTone, subscriptionStatusLabel } from './format';
+import { compactNumber, formatDateTime, formatInt, formatMs, formatPercent, formatRelative, statusTone, subscriptionStatusLabel } from './format';
 import { I18nService, TranslatePipe } from './i18n';
 import { MetricsNoticeComponent } from './metrics-notice.component';
 import { PeriodSwitchComponent } from './period-switch.component';
@@ -20,12 +23,13 @@ import { TimeSeriesChartComponent } from './time-series-chart.component';
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [BarListComponent, CopyButtonComponent, MetricsNoticeComponent, PeriodSwitchComponent, RouterLink, TimeSeriesChartComponent, TranslatePipe],
+  imports: [BarListComponent, CopyButtonComponent, EnvDotsComponent, MetricsNoticeComponent, PeriodSwitchComponent, RouterLink, TimeSeriesChartComponent, TranslatePipe],
   template: `
     <div class="page-head page-head-row">
       <div>
-        <h2>{{ 'Overview' | t }} <span class="page-env">{{ store.selected()?.label }}</span></h2>
-        <p class="lede">{{ 'How your APIs are used in this environment, and how to reach them.' | t }}</p>
+        <p class="eyebrow">{{ 'Overview' | t }} · {{ store.selected()?.label }}</p>
+        <h1 class="page-title">{{ 'Your APIs at a glance' | t }}</h1>
+        <p class="lede">{{ 'How your APIs are used in this environment, what was deployed lately, and how to reach them.' | t }}</p>
       </div>
       <app-period-switch />
     </div>
@@ -87,23 +91,83 @@ import { TimeSeriesChartComponent } from './time-series-chart.component';
         <div class="chart-grid">
           <article class="chart">
             <h4>{{ 'Most called APIs' | t }}</h4>
-            <app-bar-list [label]="'Most called APIs' | t" empty="No call on this period" [items]="apiBars(t.topApis, 'calls')" [format]="compact" />
+            <app-bar-list [label]="'Most called APIs' | t" empty="No call on this period" [items]="apiBars(t.topApis, 'calls')" [selected]="panel.origin()" [format]="compact" />
           </article>
           <article class="chart">
             <h4>{{ 'Highest error rate' | t }} <span class="muted">{{ '(20+ calls)' | t }}</span></h4>
-            <app-bar-list [label]="'APIs with the highest error rate' | t" empty="No error on this period" [items]="apiBars(t.highestErrorRate, 'errorRate')" [format]="percent" />
+            <app-bar-list [label]="'APIs with the highest error rate' | t" empty="No error on this period" [items]="apiBars(t.highestErrorRate, 'errorRate')" [selected]="panel.origin()" [format]="percent" />
           </article>
           <article class="chart">
             <h4>{{ 'Slowest APIs' | t }} <span class="muted">(p95)</span></h4>
-            <app-bar-list [label]="'Slowest APIs' | t" empty="No call on this period" [items]="apiBars(t.slowest, 'p95LatencyMs')" [format]="ms" />
+            <app-bar-list [label]="'Slowest APIs' | t" empty="No call on this period" [items]="apiBars(t.slowest, 'p95LatencyMs')" [selected]="panel.origin()" [format]="ms" />
           </article>
           <article class="chart">
             <h4>{{ 'Top consumers' | t }}</h4>
-            <app-bar-list [label]="'Applications with the most calls' | t" empty="No call on this period" [items]="appBars(t)" [format]="compact" />
+            <app-bar-list [label]="'Applications with the most calls' | t" empty="No call on this period" [items]="appBars(t)" [selected]="panel.origin()" [format]="compact" />
           </article>
         </div>
       </section>
     }
+
+
+    <div class="feed-grid">
+      <section class="panel" aria-labelledby="feed-title">
+        <div class="section-head">
+          <h3 id="feed-title" class="section-title">{{ 'Latest deployments' | t }}</h3>
+          <div class="chips" role="group" [attr.aria-label]="'Filter by environment' | t">
+            <button type="button" class="chip" [attr.aria-pressed]="feedEnv() === ''" (click)="feedEnv.set('')">{{ 'All' | t }}</button>
+            @for (env of store.environments(); track env.key) {
+              <button type="button" class="chip" [attr.aria-pressed]="feedEnv() === env.key" (click)="feedEnv.set(env.key)">{{ env.label }}</button>
+            }
+          </div>
+        </div>
+        <ul class="feed">
+          @for (env of failedEnvs(); track env.key) {
+            <li class="feed-item feed-alert">
+              <span class="env-tag" [attr.data-env]="env.key">{{ env.label }}</span>
+              <span class="feed-text">{{ '{env} could not be synchronized: {error}.' | t: { env: env.label, error: env.sync.error ?? ('unknown error' | t) } }}</span>
+              <span class="feed-when muted">{{ ago(env.sync.lastAttemptAt) }}</span>
+            </li>
+          }
+          @for (d of feed(); track d.environment + d.apiId + d.revision) {
+            <li class="feed-item" [class.is-sel]="panel.isSelected(feedFrom(d))">
+              <span class="env-tag" [attr.data-env]="d.environment">{{ d.label }}</span>
+              <span class="feed-text">
+                <button type="button" class="linkbtn" [attr.data-panel-from]="feedFrom(d)" (click)="openDeployment(d)">{{ d.apiName }}</button>&ngsp;<span class="mono muted">{{ d.apiVersion }}</span>
+                {{ '{revision} deployed on {gateways}' | t: { revision: d.revision, gateways: d.gateways.join(', ') } }}
+              </span>
+              <span class="feed-when muted" [attr.title]="date(d.deployedTime)">{{ ago(d.deployedTime) }}</span>
+            </li>
+          } @empty {
+            @if (!failedEnvs().length) {
+              <li class="feed-empty muted">{{ (deployments() === null ? 'Loading…' : 'No deployment recorded.') | t }}</li>
+            }
+          }
+        </ul>
+      </section>
+
+      <section class="panel" aria-labelledby="notprod-title">
+        <h3 id="notprod-title" class="section-title">{{ 'Not yet in {env}' | t: { env: prodLabel() } }}</h3>
+        <p class="muted section-note">{{ 'APIs deployed in a test environment but not in production.' | t }}</p>
+        @if (!index.ready()) {
+          <p class="muted">{{ 'Loading…' | t }}</p>
+        } @else {
+          <ul class="notprod">
+            @for (row of notInProd().slice(0, 8); track row.name) {
+              <li [class.is-sel]="panel.isSelected('np-' + row.name)">
+                <button type="button" class="linkbtn" [attr.data-panel-from]="'np-' + row.name" (click)="openNotProd(row)">{{ row.name }}</button>
+                <app-env-dots [envs]="store.environments()" [present]="row.present" />
+              </li>
+            } @empty {
+              <li class="muted">{{ 'Every API is in production.' | t }}</li>
+            }
+          </ul>
+          @if (notInProd().length > 8) {
+            <p class="muted">{{ '{n} more in the APIs page.' | t: { n: notInProd().length - 8 } }}</p>
+          }
+        }
+      </section>
+    </div>
 
     @switch (state()) {
       @case ('loading') {
@@ -233,6 +297,34 @@ export class OverviewComponent {
   readonly data = signal<Overview | null>(null);
   readonly state = signal<LoadState>('loading');
   readonly traffic = signal<MetricsOverview | null>(null);
+  readonly panel = inject(DetailPanel);
+  readonly index = inject(CrossEnvIndex);
+
+  /** Derniers déploiements tous environnements ; null tant que non lus. */
+  readonly deployments = signal<Deployment[] | null>(null);
+  /** Filtre du fil par environnement ; vide : tous. */
+  readonly feedEnv = signal('');
+  readonly feed = computed(() => (this.deployments() ?? []).filter((d) => !this.feedEnv() || d.environment === this.feedEnv()).slice(0, 10));
+  /** Une synchro en échec est un événement du fil : on la montre en tête. */
+  readonly failedEnvs = computed(() =>
+    this.store.environments().filter((env) => env.sync.state === 'ERROR' && (!this.feedEnv() || env.key === this.feedEnv())),
+  );
+
+  private readonly prodKey = computed(() => productionKey(this.store.environments()));
+  readonly prodLabel = computed(() => (this.prodKey() ? this.store.labelOf(this.prodKey()!) : 'EXP'));
+
+  /** API présentes dans au moins un environnement de test, absentes de la production ; les plus avancées d'abord. */
+  readonly notInProd = computed(() => {
+    const prod = this.prodKey();
+    if (!prod) {
+      return [];
+    }
+    const order = this.store.environments().map((env) => env.key);
+    return [...this.index.byName().entries()]
+      .filter(([, envs]) => !envs.has(prod))
+      .map(([name, envs]) => ({ name, present: order.filter((key) => envs.has(key)) }))
+      .sort((a, b) => order.indexOf(b.present.at(-1)!) - order.indexOf(a.present.at(-1)!) || a.name.localeCompare(b.name));
+  });
 
   /** Les chiffres de trafic ne s'affichent que si on a lu des métriques (au moins une fois) ; sinon, seul le bandeau parle. */
   readonly showTraffic = computed(() => {
@@ -296,6 +388,14 @@ export class OverviewComponent {
         this.state.set('ready');
       });
 
+    // Le fil couvre tous les environnements : il ne dépend que de l'actualisation.
+    toObservable(this.store.refreshTick)
+      .pipe(
+        switchMap(() => this.catalog.deployments(20).pipe(catchError(() => EMPTY))),
+        takeUntilDestroyed(),
+      )
+      .subscribe((deployments) => this.deployments.set(deployments));
+
     // Le trafic dépend aussi de la période. Une panne de lecture est une donnée (le bandeau) ; seule une erreur
     // réseau (BFF injoignable) laisse la zone vide.
     let trafficEnvironment = '';
@@ -315,25 +415,60 @@ export class OverviewComponent {
   }
 
   apiBars(apis: ApiMetric[], measure: 'calls' | 'errorRate' | 'p95LatencyMs'): BarItem[] {
+    const env = this.store.selectedKey();
     return apis
       .filter((api) => api[measure] > 0)
-      .map((api) => ({
-        key: `${api.apiId ?? api.name}-${api.version}`,
-        label: `${api.name} ${api.version}`,
-        value: api[measure],
-        tone: measure === 'errorRate' ? 'err' : undefined,
-        link: api.apiId ? ['/apis', this.store.selectedKey(), api.apiId] : undefined,
-      }));
+      .map((api) => {
+        const from = `${measure}-${api.apiId}`;
+        return {
+          key: `${api.apiId ?? api.name}-${api.version}`,
+          label: `${api.name} ${api.version}`,
+          value: api[measure],
+          tone: measure === 'errorRate' ? 'err' : undefined,
+          from: api.apiId ? from : undefined,
+          action: api.apiId
+            ? () => this.panel.open({ kind: 'api', env, id: api.apiId, name: api.name, version: api.version, from })
+            : undefined,
+        };
+      });
+  }
+
+  openDeployment(d: Deployment): void {
+    this.panel.open({ kind: 'api', env: d.environment, id: d.apiId, name: d.apiName, version: d.apiVersion, from: this.feedFrom(d) });
+  }
+
+  feedFrom(d: Deployment): string {
+    return `feed-${d.environment}-${d.apiId}-${d.revision}`;
+  }
+
+  /** Ouvre l'API dans l'environnement le plus avancé où elle se trouve. */
+  openNotProd(row: { name: string; present: string[] }): void {
+    const env = row.present.includes(this.store.selectedKey()) ? this.store.selectedKey() : row.present.at(-1)!;
+    const api: Api | undefined = (this.index.apis()[env] ?? []).find((a) => a.name === row.name);
+    if (api) {
+      this.panel.open({ kind: 'api', env, id: api.apiId, name: api.name, version: api.version, from: 'np-' + row.name });
+    }
+  }
+
+  ago(iso: string | null): string {
+    return formatRelative(iso, this.store.now());
+  }
+
+  date(iso: string): string {
+    return formatDateTime(iso);
   }
 
   appBars(traffic: MetricsOverview): BarItem[] {
+    const env = this.store.selectedKey();
     return traffic.topApplications.map((app) => ({
       key: app.applicationId ?? app.name,
       label: app.name,
       value: app.calls,
-      // L'application est retrouvée par son nom dans la liste : un lien n'a de sens que si elle existe au catalogue.
-      link: app.applicationId ? ['/applications'] : undefined,
-      queryParams: app.applicationId ? { q: app.name } : undefined,
+      // Une application hors catalogue (non rapprochée) n'a pas de détail à ouvrir.
+      from: app.applicationId ? `app-top-${app.applicationId}` : undefined,
+      action: app.applicationId
+        ? () => this.panel.open({ kind: 'app', env, id: app.applicationId, name: app.name, from: `app-top-${app.applicationId}` })
+        : undefined,
     }));
   }
 

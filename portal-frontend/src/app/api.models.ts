@@ -66,9 +66,24 @@ export interface Revision {
   gateways: Gateway[];
 }
 
+/** revision et deployedTime : dernière révision déployée dans l'environnement ; nulles si aucune ne l'est. */
 export interface PresenceVersion {
   apiId: string;
   version: string;
+  revision?: string | null;
+  deployedTime?: string | null;
+}
+
+/** Une révision déployée dans un environnement : une ligne du fil des déploiements. */
+export interface Deployment {
+  environment: string;
+  label: string;
+  apiId: string;
+  apiName: string;
+  apiVersion: string;
+  revision: string;
+  gateways: string[];
+  deployedTime: string;
 }
 
 /** Versions d'une API (par son nom) dans un environnement ; « stale » : données de la dernière synchro réussie. */

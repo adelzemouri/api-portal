@@ -7,6 +7,7 @@ import {
   AppMetricsList,
   Application,
   ApplicationMetrics,
+  Deployment,
   Environment,
   MetricsOverview,
   MetricsStatus,
@@ -15,6 +16,7 @@ import {
   PortalInfo,
   Subscription,
 } from './api.models';
+import { CrossEnvIndex } from './cross-env';
 import { EnvironmentStore, LoadState } from './environment.store';
 
 /** Données et doublures partagées par les tests des composants. */
@@ -29,7 +31,10 @@ export const ENVIRONMENTS: Environment[] = [
     publisherUrl: 'https://apim-dev.bank.internal/publisher',
     devportalUrl: 'https://apim-dev.bank.internal/devportal',
     identityServerUrl: 'https://is-dev.bank.internal',
-    gateways: [{ name: 'Default', vhost: 'gw-dev.bank.internal', url: 'https://gw-dev.bank.internal:8243' }],
+    gateways: [
+      { name: 'Default', vhost: 'gw-dev.bank.internal', url: 'https://gw-dev.bank.internal:8243' },
+      { name: 'Internal', vhost: 'gw-int-dev.bank.internal', url: 'https://gw-int-dev.bank.internal:8243' },
+    ],
   },
   {
     key: 'sim',
@@ -66,6 +71,11 @@ export const ENVIRONMENTS: Environment[] = [
 export const APIS: Api[] = [
   { apiId: 'p-14', name: 'Payments', version: '1.4', context: '/payments/1.4', type: 'HTTP', lifeCycleStatus: 'PUBLISHED', subscriptionCount: 2 },
   { apiId: 'k-10', name: 'KYC Checks', version: '1.0', context: '/kyc/1.0', type: 'HTTP', lifeCycleStatus: 'DEPRECATED', subscriptionCount: 0 },
+];
+
+export const DEPLOYMENTS: Deployment[] = [
+  { environment: 'exp', label: 'EXP', apiId: 'k-10', apiName: 'KYC Checks', apiVersion: '1.0', revision: 'Revision 3', gateways: ['Default', 'Internal'], deployedTime: '2026-01-01T09:10:00Z' },
+  { environment: 'dev', label: 'DEV', apiId: 'p-14', apiName: 'Payments', apiVersion: '1.4', revision: 'Revision 7', gateways: ['Default'], deployedTime: '2026-01-01T08:10:00Z' },
 ];
 
 export const PORTAL: PortalInfo = { deployComponentUrl: 'https://gitlab.bank.internal/platform/ci-components/swagger-deploy' };
@@ -214,4 +224,19 @@ export function fakeStore(overrides: { state?: LoadState; demoMode?: boolean; se
     labelOf: (key: string) => key.toUpperCase(),
   };
   return store as unknown as EnvironmentStore & { select: jasmine.Spy; setPeriod: jasmine.Spy };
+}
+
+/** Index inter-environnements figé : nom → environnements où l'API existe. */
+export function fakeIndex(presence: Record<string, string[]> = { Payments: ['dev', 'sim', 'uat'], 'KYC Checks': ['dev', 'sim', 'uat', 'exp'] }, ready = true) {
+  const byName = new Map(Object.entries(presence).map(([name, envs]) => [name, new Set(envs)]));
+  const apis: Record<string, Api[]> = {};
+  for (const env of ENVIRONMENTS) {
+    apis[env.key] = APIS.filter((api) => presence[api.name]?.includes(env.key)).map((api) => ({ ...api, apiId: `${env.key}-${api.apiId}` }));
+  }
+  return {
+    apis: signal(apis),
+    byName: signal(byName),
+    ready: signal(ready),
+    presence: (name: string) => ENVIRONMENTS.map((env) => env.key).filter((key) => byName.get(name)?.has(key)),
+  } as unknown as CrossEnvIndex;
 }

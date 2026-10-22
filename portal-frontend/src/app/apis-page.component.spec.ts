@@ -6,7 +6,9 @@ import { ApisPageComponent } from './apis-page.component';
 import { CatalogService } from './catalog.service';
 import { EnvironmentStore } from './environment.store';
 import { compactNumber } from './format';
-import { API_DETAIL, API_METRICS_LIST, APIS, DISABLED, SUBSCRIPTIONS, fakeStore } from './testing';
+import { CrossEnvIndex } from './cross-env';
+import { DetailPanel } from './detail-panel.service';
+import { API_DETAIL, API_METRICS_LIST, APIS, DISABLED, SUBSCRIPTIONS, fakeIndex, fakeStore } from './testing';
 
 describe('ApisPageComponent', () => {
   function setup(list: Api[] = APIS, metricsList: Observable<ApiMetricsList> = of(API_METRICS_LIST)) {
@@ -21,9 +23,11 @@ describe('ApisPageComponent', () => {
         provideRouter([]),
         { provide: CatalogService, useValue: { apis, apiDetail, subscriptionsOfApi, apiMetricsList } },
         { provide: EnvironmentStore, useValue: store },
+        { provide: CrossEnvIndex, useValue: fakeIndex() },
       ],
     });
     const fixture = TestBed.createComponent(ApisPageComponent);
+    const panel = TestBed.inject(DetailPanel);
     const el = fixture.nativeElement as HTMLElement;
     // Le premier détectChanges arme les effets de toObservable : il faut les vider pour charger la liste.
     const settle = () => {
@@ -45,12 +49,12 @@ describe('ApisPageComponent', () => {
       select.dispatchEvent(new Event('change'));
       fixture.detectChanges();
     };
-    const names = () => Array.from(el.querySelectorAll('tr.row th')).map((th) => th.textContent?.trim());
+    const names = () => Array.from(el.querySelectorAll('tr.row th .linkbtn')).map((b) => b.textContent?.trim());
     const cells = (row: Element) =>
-      Array.from(row.children).slice(0, -1).map((c) => c.textContent?.trim());
+      Array.from(row.children).slice(0, -1).map((c) => c.textContent?.replace(/\s+/g, ' ').trim());
     const headers = () =>
       Array.from(el.querySelectorAll('thead th')).slice(0, -1).map((th) => th.textContent?.replace(/[↑↓]/, '').trim());
-    return { fixture, el, apis, apiDetail, subscriptionsOfApi, apiMetricsList, store, settle, type, filter, choose, names, cells, headers };
+    return { fixture, el, panel, apis, apiDetail, subscriptionsOfApi, apiMetricsList, store, settle, type, filter, choose, names, cells, headers };
   }
 
   it('lists the APIs of the selected environment with their traffic on the period', () => {
@@ -60,12 +64,11 @@ describe('ApisPageComponent', () => {
 
     expect(apis).toHaveBeenCalledOnceWith('dev');
     expect(apiMetricsList).toHaveBeenCalledOnceWith('dev', '24h');
-    expect(el.querySelector('.page-env')?.textContent).toContain('DEV');
-    expect(headers()).toEqual(['Name', 'Version', 'Context', 'Calls', 'Error rate', 'Latency p95', 'Subscribers']);
+    expect(el.querySelector('.eyebrow')?.textContent).toContain('2 APIs in DEV');
+    expect(headers()).toEqual(['API', 'Path', 'Context', 'Calls', 'Errors', 'Latency p95', 'Subscribers']);
     const rows = Array.from(el.querySelectorAll('tr.row'));
-    expect(cells(rows[0])).toEqual(['KYC Checks', '1.0', '/kyc/1.0', '—', '—', '—', '0']);
-    expect(cells(rows[1])).toEqual(['Payments', '1.4', '/payments/1.4', compactNumber(8000), '3.0%', '300 ms', '2']);
-    expect(el.querySelector('tr.detail')).toBeNull();
+    expect(cells(rows[0])).toEqual(['KYC Checks1.0', '', '/kyc/1.0', '—', '—', '—', '0']);
+    expect(cells(rows[1])).toEqual(['Payments1.4', '', '/payments/1.4', compactNumber(8000), '3.0%', '300 ms', '2']);
   });
 
   it('no longer shows the API lifecycle: it is not governed yet', () => {
@@ -75,6 +78,7 @@ describe('ApisPageComponent', () => {
     expect(el.textContent).not.toContain('Published');
     expect(el.textContent).not.toContain('Deprecated');
     expect(filter('Status')).toBeUndefined();
+    expect(el.querySelector('tr.row .row-sub')?.textContent?.trim()).toBe('1.0');
   });
 
   it('hides the traffic columns and filter when no metrics source exists, and says why', () => {
@@ -82,8 +86,8 @@ describe('ApisPageComponent', () => {
 
     settle();
 
-    expect(headers()).toEqual(['Name', 'Version', 'Context', 'Subscribers']);
-    expect(filter('Traffic')).toBeUndefined();
+    expect(headers()).toEqual(['API', 'Path', 'Context', 'Subscribers']);
+    expect(Array.from(el.querySelectorAll('.chip')).map((c) => c.textContent)).not.toContain(jasmine.stringContaining('Not called'));
     expect(el.textContent).toContain('Traffic metrics are not configured for this environment.');
     expect(names()).toEqual(['KYC Checks', 'Payments']);
   });
@@ -103,7 +107,7 @@ describe('ApisPageComponent', () => {
     settle();
 
     expect(names()).toEqual(['KYC Checks', 'Payments']);
-    expect(headers()).toEqual(['Name', 'Version', 'Context', 'Subscribers']);
+    expect(headers()).toEqual(['API', 'Path', 'Context', 'Subscribers']);
   });
 
   it('filters instantly on the text, without any new request', () => {
@@ -115,24 +119,6 @@ describe('ApisPageComponent', () => {
 
     expect(names()).toEqual(['Payments']);
     expect(apis).not.toHaveBeenCalled();
-  });
-
-  it('filters on type, subscribers and traffic, and clears all filters', () => {
-    const { fixture, el, settle, choose, names, filter } = setup();
-    settle();
-    expect(Array.from(filter('Type')!.querySelectorAll('option')).map((o) => o.textContent?.trim())).toEqual(['All', 'HTTP']);
-
-    choose('Subscribers', 'with');
-    expect(names()).toEqual(['Payments']);
-    choose('Traffic', 'without');
-    expect(el.textContent).toContain('No API matches these filters.');
-
-    el.querySelector<HTMLButtonElement>('.link-btn')!.click();
-    fixture.detectChanges();
-    expect(names()).toEqual(['KYC Checks', 'Payments']);
-    expect(el.querySelector('.link-btn')).toBeNull();
-    choose('Traffic', 'with');
-    expect(names()).toEqual(['Payments']);
   });
 
   it('sorts by calls and reverses on a second click, announcing it to assistive technology', () => {
@@ -166,67 +152,90 @@ describe('ApisPageComponent', () => {
     expect(el.querySelector('.pager-range')?.textContent).toContain('26–30 of 30 APIs');
   });
 
-  it('expands a row to show deployment, gateway URLs, presence in every environment and subscribers, loaded once', () => {
-    const { fixture, el, apiDetail, subscriptionsOfApi, settle } = setup();
+  it('opens the side panel on a row, keeps the row highlighted, and closes it on a second click', () => {
+    const { fixture, el, settle, panel } = setup();
     settle();
 
     el.querySelectorAll<HTMLElement>('tr.row')[1].click();
     fixture.detectChanges();
 
-    expect(apiDetail).toHaveBeenCalledOnceWith('dev', 'p-14');
-    expect(subscriptionsOfApi).toHaveBeenCalledOnceWith('dev', 'p-14');
-    const detail = el.querySelector('tr.detail')!;
-    expect(detail.textContent).toContain('Revision 7');
-    expect(detail.textContent).toContain('gw-int-dev.bank.internal');
-    expect(Array.from(detail.querySelectorAll('.url-list .url')).map((u) => u.textContent)).toEqual([
-      'https://gw-dev.bank.internal:8243/payments/1.4',
-      'https://gw-int-dev.bank.internal:8243/payments/1.4',
-    ]);
-    expect(detail.querySelectorAll('.url-list app-copy-button').length).toBe(2);
-    const presence = Array.from(detail.querySelectorAll('.presence-list li')).map((li) =>
-      Array.from(li.children).map((c) => c.textContent?.trim()).join(' '),
-    );
-    expect(presence).toEqual(['DEV 1.4', 'SIM 1.3, 1.10', 'UAT 1.3 outdated', 'EXP —not present']);
-    expect(detail.textContent).toContain('Subscribers (2)');
-    expect(detail.textContent).toContain('Mobile Banking');
-    expect(detail.querySelector('a')?.getAttribute('href')).toBe('/apis/dev/p-14');
-    expect(el.querySelectorAll('button.chevron')[1].getAttribute('aria-expanded')).toBe('true');
-  });
-
-  it('gives the open row and its drawer the same marker, so the drawer is easy to spot', () => {
-    const { fixture, el, settle } = setup();
-    settle();
-
-    el.querySelectorAll<HTMLElement>('tr.row')[1].click();
-    fixture.detectChanges();
-
-    const open = el.querySelector('tbody.open')!;
-    expect(open.querySelector('tr.row')).not.toBeNull();
-    expect(open.querySelector('tr.detail')).not.toBeNull();
-    expect(el.querySelectorAll('tbody.open').length).toBe(1);
-  });
-
-  it('collapses on a second click, and reports a failed detail load', () => {
-    const { fixture, el, apiDetail, settle } = setup();
-    settle();
-    const row = el.querySelectorAll<HTMLElement>('tr.row')[1];
-
-    row.click();
-    row.click();
-    fixture.detectChanges();
+    expect(panel.current()).toEqual(jasmine.objectContaining({ kind: 'api', env: 'dev', id: 'p-14', name: 'Payments', version: '1.4' }));
+    const row = el.querySelectorAll('tr.row')[1];
+    expect(row.classList).toContain('is-sel');
+    expect(row.querySelector('.linkbtn')?.getAttribute('aria-expanded')).toBe('true');
+    expect(el.querySelectorAll('tr.is-sel').length).toBe(1);
     expect(el.querySelector('tr.detail')).toBeNull();
 
-    apiDetail.and.returnValue(throwError(() => new Error('boom')));
-    row.click();
+    el.querySelectorAll<HTMLElement>('tr.row')[1].click();
     fixture.detectChanges();
-    expect(el.querySelector('tr.detail')?.textContent).toContain('Unable to load the details of this API');
+    expect(panel.isOpen()).toBeFalse();
+    expect(el.querySelector('tr.is-sel')).toBeNull();
   });
 
-  it('switching environment reloads the list and the metrics, resets the filters and collapses every row', () => {
+  it('swaps the panel content when another row is clicked, without closing it', () => {
+    const { fixture, el, settle, panel } = setup();
+    settle();
+
+    el.querySelectorAll<HTMLElement>('tr.row')[1].click();
+    el.querySelectorAll<HTMLElement>('tr.row')[0].click();
+    fixture.detectChanges();
+
+    expect(panel.current()?.name).toBe('KYC Checks');
+    expect(el.querySelectorAll('tr.row')[0].classList).toContain('is-sel');
+    expect(el.querySelectorAll('tr.row')[1].classList).not.toContain('is-sel');
+  });
+
+  it('shows the path of each API across the environments', () => {
+    const { el, settle } = setup();
+    settle();
+
+    const labels = Array.from(el.querySelectorAll('tr.row .dots')).map((d) => d.getAttribute('aria-label'));
+    expect(labels).toEqual(['Deployed in DEV, SIM, UAT, EXP', 'Deployed in DEV, SIM, UAT']);
+  });
+
+  it('copies the internal gateway URL straight from the row, without opening the panel', async () => {
+    const { fixture, el, settle, panel } = setup();
+    settle();
+    const write = jasmine.createSpy('writeText').and.resolveTo();
+    spyOnProperty(navigator, 'clipboard', 'get').and.returnValue({ writeText: write } as unknown as Clipboard);
+
+    const button = el.querySelectorAll<HTMLButtonElement>('tr.row .copy')[1];
+    expect(button.textContent?.trim()).toBe('Copy internal URL');
+    expect(button.title).toBe('Internal gateway DEV : https://gw-int-dev.bank.internal:8243/payments/1.4');
+    button.click();
+    await fixture.whenStable();
+
+    expect(write).toHaveBeenCalledOnceWith('https://gw-int-dev.bank.internal:8243/payments/1.4');
+    expect(panel.isOpen()).toBeFalse();
+  });
+
+  it('offers quick filters with their counts, including the APIs not yet in production', () => {
+    const { fixture, el, settle, names } = setup();
+    settle();
+    const chips = () => Array.from(el.querySelectorAll<HTMLButtonElement>('.chip'));
+
+    expect(chips().map((c) => c.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'All 2',
+      'With subscribers 1',
+      'No subscribers 1',
+      'Not called 1',
+      'Not yet in EXP 1',
+    ]);
+
+    chips()[4].click();
+    fixture.detectChanges();
+    expect(names()).toEqual(['Payments']);
+    expect(chips()[4].getAttribute('aria-pressed')).toBe('true');
+
+    chips()[2].click();
+    fixture.detectChanges();
+    expect(names()).toEqual(['KYC Checks']);
+  });
+
+  it('switching environment reloads the list and the metrics and resets the filters', () => {
     const { el, apis, apiMetricsList, store, settle, type } = setup();
     settle();
     type('input[type="search"]', 'pay');
-    el.querySelector<HTMLElement>('tr.row')!.click();
     apis.calls.reset();
     apiMetricsList.calls.reset();
 
@@ -236,8 +245,7 @@ describe('ApisPageComponent', () => {
     expect(apis).toHaveBeenCalledOnceWith('sim');
     expect(apiMetricsList).toHaveBeenCalledOnceWith('sim', '24h');
     expect(el.querySelector<HTMLInputElement>('input[type="search"]')!.value).toBe('');
-    expect(el.querySelector('tr.detail')).toBeNull();
-    expect(el.querySelector('.page-env')?.textContent).toContain('SIM');
+    expect(el.querySelector('.eyebrow')?.textContent).toContain('SIM');
   });
 
   it('changing the period reads the metrics again, not the catalog', () => {
@@ -250,20 +258,6 @@ describe('ApisPageComponent', () => {
 
     expect(apiMetricsList).toHaveBeenCalledWith('dev', '7d');
     expect(apis).not.toHaveBeenCalled();
-  });
-
-  it('refreshing keeps the expanded rows open', () => {
-    const { fixture, el, store, subscriptionsOfApi, settle } = setup();
-    settle();
-    el.querySelectorAll<HTMLElement>('tr.row')[1].click();
-    fixture.detectChanges();
-    subscriptionsOfApi.calls.reset();
-
-    (store.refreshTick as unknown as { update: (fn: (n: number) => number) => void }).update((n) => n + 1);
-    settle();
-
-    expect(el.querySelector('tr.detail')?.textContent).toContain('Mobile Banking');
-    expect(subscriptionsOfApi).toHaveBeenCalledTimes(1);
   });
 
   it('shows an empty message and an error message', () => {

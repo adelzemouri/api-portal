@@ -7,8 +7,8 @@ import { TranslatePipe } from './i18n';
   standalone: true,
   imports: [TranslatePipe],
   template: `
-    <button type="button" class="copy" (click)="copy()" [attr.aria-label]="(copied() ? 'Copied {what}' : 'Copy {what}') | t: { what: (label | t) }">
-      {{ (copied() ? 'Copied' : 'Copy') | t }}
+    <button type="button" class="copy" (click)="copy(); $event.stopPropagation()" [attr.title]="hint" [attr.aria-label]="(copied() ? 'Copied {what}' : 'Copy {what}') | t: { what: (label | t) }">
+      {{ (copied() ? 'Copied' : caption ?? 'Copy') | t }}
     </button>
   `,
 })
@@ -16,6 +16,10 @@ export class CopyButtonComponent implements OnDestroy {
   @Input({ required: true }) text = '';
   /** Ce qui est copié, pour les lecteurs d'écran (« Copy gateway URL »). */
   @Input() label = 'to clipboard';
+  /** Texte du bouton (« Copy internal URL ») ; « Copy » par défaut. */
+  @Input() caption: string | null = null;
+  /** Infobulle : ce qui sera copié, en entier. */
+  @Input() hint: string | null = null;
 
   readonly copied = signal(false);
   private timer: ReturnType<typeof setTimeout> | undefined;

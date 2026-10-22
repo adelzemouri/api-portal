@@ -1,12 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMPTY, catchError, combineLatest, forkJoin, map, switchMap, tap } from 'rxjs';
 import { ApiDetail, ApiMetrics, Environment, Subscription, Usage } from './api.models';
 import { BarItem, BarListComponent } from './bar-list.component';
 import { CatalogService } from './catalog.service';
 import { CopyButtonComponent } from './copy-button.component';
+import { DetailPanel } from './detail-panel.service';
+import { EnvPathComponent } from './env-path.component';
 import { EnvironmentStore } from './environment.store';
 import { compactNumber, formatDateTime, formatInt, formatMs, formatPercent, lifeCycleLabel, subscriptionStatusLabel } from './format';
 import { I18nService, TranslatePipe } from './i18n';
@@ -15,28 +17,21 @@ import { PeriodSwitchComponent } from './period-switch.component';
 import { TimeSeriesChartComponent } from './time-series-chart.component';
 
 type PageState = 'loading' | 'ready' | 'error' | 'notfound';
-type Tab = 'traffic' | 'endpoints' | 'consumers' | 'deployment';
 
 interface ApiPageData {
   detail: ApiDetail;
   subscriptions: Subscription[];
 }
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'traffic', label: 'Traffic' },
-  { key: 'endpoints', label: 'Endpoints' },
-  { key: 'consumers', label: 'Consumers' },
-  { key: 'deployment', label: 'Deployment' },
-];
-
 /**
- * Fiche d'une API, accessible par lien direct (/apis/{environnement}/{id}) : trafic (appels, erreurs, latence,
- * consommateurs), URL d'appel, impact d'un changement (qui prévenir) et déploiement.
+ * Fiche d'une API, accessible par lien direct (/apis/{environnement}/{id}) : parcours jusqu'à la production, trafic,
+ * URL d'appel, impact d'un changement (qui prévenir) et déploiement, d'un seul tenant (sans onglets).
+ * Elle suit le sélecteur d'environnement de l'en-tête : la même API (par son nom) est ouverte dans l'autre environnement.
  */
 @Component({
   selector: 'app-api-page',
   standalone: true,
-  imports: [BarListComponent, CopyButtonComponent, MetricsNoticeComponent, PeriodSwitchComponent, RouterLink, TimeSeriesChartComponent, TranslatePipe],
+  imports: [BarListComponent, CopyButtonComponent, EnvPathComponent, MetricsNoticeComponent, PeriodSwitchComponent, RouterLink, TimeSeriesChartComponent, TranslatePipe],
   template: `
     <nav class="breadcrumb" [attr.aria-label]="'Breadcrumb' | t">
       <a routerLink="/apis">{{ 'APIs' | t }}</a>
@@ -103,17 +98,23 @@ const TABS: { key: Tab; label: string }[] = [
             </div>
           </section>
 
-          <div class="tabs" role="tablist" [attr.aria-label]="'API sections' | t">
-            @for (t of tabs; track t.key) {
-              <button type="button" role="tab" [id]="'tab-' + t.key" [attr.aria-controls]="'panel-' + t.key" [attr.aria-selected]="tab() === t.key" (click)="tab.set(t.key)">{{ t.label | t }}</button>
-            }
-          </div>
+          @if (absentIn(); as other) {
+            <p class="banner" role="status">
+              {{ 'This API is not deployed in {env}. Showing {current}.' | t: { env: store.labelOf(other), current: envLabel() } }}
+            </p>
+          }
 
-          @switch (tab()) {
-            @case ('traffic') {
-              <section class="tabpanel" role="tabpanel" id="panel-traffic" aria-labelledby="tab-traffic">
-                <div class="tab-tools"><app-period-switch /></div>
-                <app-metrics-notice [status]="metrics()?.status" />
+          <section class="panel" id="panel-path" aria-labelledby="path-title">
+            <h3 id="path-title" class="section-title">{{ 'Path to production' | t }}</h3>
+            <app-env-path [presence]="page.detail.environments" [current]="routeEnv()" (pick)="store.select($event)" />
+          </section>
+
+          <section class="page-section" id="panel-traffic" aria-labelledby="traffic-title">
+            <div class="section-head">
+              <h3 id="traffic-title" class="section-title">{{ 'Traffic' | t }}</h3>
+              <app-period-switch />
+            </div>
+                                <app-metrics-notice [status]="metrics()?.status" />
                 @if (hasMetrics()) {
                   @if (!metrics()?.metrics) {
                     <p class="state-msg">{{ 'No call recorded on this API in the period.' | t }}</p>
@@ -131,7 +132,7 @@ const TABS: { key: Tab; label: string }[] = [
                     <div class="chart-pair">
                       <article class="chart">
                         <h4>{{ 'Top consumers' | t }}</h4>
-                        <app-bar-list [label]="'Applications calling this API' | t" [empty]="'No consumer' | t" [items]="consumerBars()" [format]="compact" />
+                        <app-bar-list [label]="'Applications calling this API' | t" [empty]="'No consumer' | t" [items]="consumerBars()" [selected]="panel.origin()" [format]="compact" />
                       </article>
                       <article class="chart">
                         <h4>{{ 'Errors by kind' | t }}</h4>
@@ -140,12 +141,11 @@ const TABS: { key: Tab; label: string }[] = [
                     </div>
                   }
                 }
-              </section>
-            }
-            @case ('endpoints') {
-              <section class="tabpanel" role="tabpanel" id="panel-endpoints" aria-labelledby="tab-endpoints">
+          </section>
+
+          <section class="page-section" id="panel-endpoints" aria-labelledby="endpoints-title">
                 <div class="panel">
-                  <h3 class="section-title">{{ 'Call this API' | t }}</h3>
+                  <h3 id="endpoints-title" class="section-title">{{ 'Call this API' | t }}</h3>
                   @if (page.detail.gatewayUrls.length === 0) {
                     <p class="detail-msg">{{ 'No gateway serves this API yet: deploy a revision to get its URL.' | t }}</p>
                   } @else {
@@ -167,13 +167,12 @@ const TABS: { key: Tab; label: string }[] = [
                     </p>
                   }
                 </div>
-              </section>
-            }
-            @case ('consumers') {
-              <section class="tabpanel" role="tabpanel" id="panel-consumers" aria-labelledby="tab-consumers">
+          </section>
+
+          <section class="page-section" id="panel-consumers" aria-labelledby="impact-title">
                 <div class="panel">
                   <div class="section-head">
-                    <h3 class="section-title">{{ 'Impact of a change' | t }}</h3>
+                    <h3 id="impact-title" class="section-title">{{ 'Impact of a change' | t }}</h3>
                     @if (page.subscriptions.length > 0) {
                       <button type="button" class="btn" (click)="copyContacts()">{{ (contactsCopied() ? 'Contacts copied' : 'Copy contacts') | t }}</button>
                     }
@@ -218,12 +217,11 @@ const TABS: { key: Tab; label: string }[] = [
                     </div>
                   }
                 </div>
-              </section>
-            }
-            @case ('deployment') {
-              <section class="tabpanel" role="tabpanel" id="panel-deployment" aria-labelledby="tab-deployment">
-                <div class="detail-grid page-grid">
-                  <section class="panel" aria-labelledby="deploy-title">
+          </section>
+
+          <section class="page-section" id="panel-deployment" aria-labelledby="deploy-title">
+                <div>
+                  <section class="panel">
                     <h3 id="deploy-title" class="section-title">{{ 'Deployment' | t }}</h3>
                     @if (page.detail.revisions.length === 0) {
                       <p class="detail-msg">{{ 'No revision is deployed on a gateway.' | t }}</p>
@@ -245,29 +243,8 @@ const TABS: { key: Tab; label: string }[] = [
                     }
                   </section>
 
-                  <section class="panel" aria-labelledby="across-title">
-                    <h3 id="across-title" class="section-title">{{ 'Across environments' | t }}</h3>
-                    <ul class="presence-list">
-                      @for (env of page.detail.environments; track env.environment) {
-                        <li [class.current]="env.environment === routeEnv()" [class.absent]="env.versions.length === 0">
-                          <span class="env-tag">{{ env.label }}</span>
-                          @if (env.versions.length === 0) {
-                            <span class="muted"><span aria-hidden="true">—</span><span class="sr-only">{{ 'not present' | t }}</span></span>
-                          }
-                          @for (v of env.versions; track v.apiId) {
-                            <a class="mono" [routerLink]="['/apis', env.environment, v.apiId]" [attr.aria-current]="v.apiId === apiId() ? 'page' : null">{{ v.version }}</a>
-                          }
-                          @if (env.stale) {
-                            <span class="stale" [attr.title]="'Environment in error: showing its last successful synchronization, if any' | t">{{ (env.versions.length ? 'outdated' : 'unavailable') | t }}</span>
-                          }
-                        </li>
-                      }
-                    </ul>
-                  </section>
                 </div>
-              </section>
-            }
-          }
+          </section>
         }
       }
     }
@@ -276,17 +253,19 @@ const TABS: { key: Tab; label: string }[] = [
 export class ApiPageComponent {
   private readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly store = inject(EnvironmentStore);
+  readonly panel = inject(DetailPanel);
   private readonly i18n = inject(I18nService);
 
-  readonly tabs = TABS;
-  readonly tab = signal<Tab>('traffic');
   readonly routeEnv = signal('');
   readonly apiId = signal('');
   readonly data = signal<ApiPageData | null>(null);
   readonly metrics = signal<ApiMetrics | null>(null);
   readonly state = signal<PageState>('loading');
   readonly linkCopied = signal(false);
+  /** Environnement choisi dans l'en-tête où l'API n'existe pas ; la fiche reste sur celui du lien. */
+  readonly absentIn = signal<string | null>(null);
   readonly contactsCopied = signal(false);
 
   readonly environment = computed<Environment | undefined>(() => this.store.environments().find((env) => env.key === this.routeEnv()));
@@ -308,8 +287,10 @@ export class ApiPageComponent {
       key: c.applicationId ?? c.applicationName,
       label: c.applicationName,
       value: c.calls,
-      link: c.applicationId ? ['/applications'] : undefined,
-      queryParams: c.applicationId ? { q: c.applicationName } : undefined,
+      from: c.applicationId ? 'consumer-' + c.applicationId : undefined,
+      action: c.applicationId
+        ? () => this.panel.open({ kind: 'app', env: this.routeEnv(), id: c.applicationId, name: c.applicationName, from: 'consumer-' + c.applicationId })
+        : undefined,
     })),
   );
 
@@ -362,6 +343,7 @@ export class ApiPageComponent {
         tap(({ env, apiId }) => {
           this.routeEnv.set(env);
           this.apiId.set(apiId);
+          this.absentIn.set(null);
           // La fiche fait foi de l'environnement : l'en-tête suit le lien.
           if (this.store.selectedKey() !== env) {
             this.store.select(env);
@@ -400,6 +382,26 @@ export class ApiPageComponent {
         takeUntilDestroyed(),
       )
       .subscribe((metrics) => this.metrics.set(metrics));
+
+    toObservable(this.store.selectedKey)
+      .pipe(takeUntilDestroyed())
+      .subscribe((key) => this.follow(key));
+  }
+
+  /** L'en-tête a changé d'environnement : on ouvre la même API (même nom, même version si possible) dans celui-ci. */
+  follow(key: string): void {
+    const page = this.data();
+    if (!key || !page || key === this.routeEnv()) {
+      this.absentIn.set(null);
+      return;
+    }
+    const versions = page.detail.environments.find((env) => env.environment === key)?.versions ?? [];
+    const target = versions.find((v) => v.version === page.detail.api.version) ?? versions[0];
+    if (target) {
+      void this.router.navigate(['/apis', key, target.apiId], { replaceUrl: true });
+    } else {
+      this.absentIn.set(key);
+    }
   }
 
   life(status: string): string {

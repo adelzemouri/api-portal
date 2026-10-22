@@ -145,6 +145,19 @@ describe('BarListComponent', () => {
     expect(rows[1].querySelector('a')).toBeNull();
   });
 
+  it('turns a label into a button when an action is given (side panel), before any link', () => {
+    const action = jasmine.createSpy('action');
+    const el = render((host) => {
+      host.items = [{ key: 'a', label: 'Payments', value: 5, action, link: ['/apis'], from: 'calls-p' }];
+    });
+
+    const button = el.querySelector<HTMLButtonElement>('.bar-row .linkbtn')!;
+    expect(el.querySelector('.bar-row a')).toBeNull();
+    expect(button.getAttribute('data-panel-from')).toBe('calls-p');
+    button.click();
+    expect(action).toHaveBeenCalledTimes(1);
+  });
+
   it('says so when there is nothing to draw', () => {
     const el = render(() => undefined);
 
