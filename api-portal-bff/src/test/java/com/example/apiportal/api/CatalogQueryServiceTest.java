@@ -351,4 +351,58 @@ class CatalogQueryServiceTest {
         assertThat(masked.subscriptionsOfApplication("dev", "app1")).extracting(ApiModels.SubscriptionDto::subscriber)
                 .containsOnly("***");
     }
+
+    @Test
+    @DisplayName("présence : chaque version porte sa dernière révision déployée et sa date")
+    void presenceCarriesLatestDeployedRevision() {
+        assertThat(service.apiDetail("dev", "d-pay").environments().get(3).versions()).singleElement().satisfies(v -> {
+            assertThat(v.revision()).isEqualTo("Revision 1");
+            assertThat(v.deployedTime()).isEqualTo("2026-01-01T01:00:00Z");
+        });
+    }
+
+    @Test
+    @DisplayName("présence : sans révision déployée, révision et date sont nulles")
+    void presenceWithoutDeploymentHasNoRevision() {
+        store.recordSuccess("uat", new CatalogSnapshot(List.of(api("u-pay", "Payments", "1.2")), Map.of(), Map.of(),
+                List.of()), NOW);
+
+        assertThat(service.apiDetail("dev", "d-pay").environments().get(2).versions()).singleElement().satisfies(v -> {
+            assertThat(v.revision()).isNull();
+            assertThat(v.deployedTime()).isNull();
+        });
+    }
+
+    @Test
+    @DisplayName("derniers déploiements : tous environnements, du plus récent au plus ancien, une ligne par révision")
+    void recentDeploymentsAcrossEnvironmentsNewestFirst() {
+        Revision older = new Revision("r1", "Revision 1", "2026-01-01T00:00:00Z", List.of(
+                new RevisionDeployment("Default", "gw.test", "APPROVED", "2026-01-02T08:00:00Z"),
+                new RevisionDeployment("Internal", "gw-int.test", "APPROVED", "2026-01-02T09:00:00Z")));
+        Revision newer = new Revision("r2", "Revision 2", "2026-01-03T00:00:00Z", List.of(
+                new RevisionDeployment("Default", "gw.test", "APPROVED", "2026-01-03T10:00:00Z")));
+        Revision undated = new Revision("r3", "Revision 3", "2026-01-04T00:00:00Z", List.of(
+                new RevisionDeployment("Default", "gw.test", "CREATED", null)));
+        store.recordSuccess("uat", new CatalogSnapshot(List.of(api("u-pay", "Payments", "1.2")),
+                Map.of("u-pay", List.of(older, undated)), Map.of(), List.of()), NOW);
+        store.recordSuccess("exp", new CatalogSnapshot(List.of(api("e-pay", "Payments", "1.2")),
+                Map.of("e-pay", List.of(newer)), Map.of(), List.of()), NOW);
+
+        List<ApiModels.DeploymentDto> deployments = service.recentDeployments(10);
+
+        assertThat(deployments).extracting(ApiModels.DeploymentDto::environment, ApiModels.DeploymentDto::revision,
+                        ApiModels.DeploymentDto::deployedTime)
+                .startsWith(
+                        org.assertj.core.groups.Tuple.tuple("exp", "Revision 2", "2026-01-03T10:00:00Z"),
+                        org.assertj.core.groups.Tuple.tuple("uat", "Revision 1", "2026-01-02T09:00:00Z"));
+        assertThat(deployments.get(1).gateways()).containsExactly("Default", "Internal");
+        assertThat(deployments.get(1).label()).isEqualTo("UAT");
+        assertThat(deployments).extracting(ApiModels.DeploymentDto::revision).doesNotContain("Revision 3");
+    }
+
+    @Test
+    @DisplayName("derniers déploiements : la liste est plafonnée")
+    void recentDeploymentsAreLimited() {
+        assertThat(service.recentDeployments(2)).hasSize(2);
+    }
 }

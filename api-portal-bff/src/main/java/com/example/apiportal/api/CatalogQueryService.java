@@ -3,6 +3,7 @@ package com.example.apiportal.api;
 import com.example.apiportal.api.ApiModels.ApiDetailDto;
 import com.example.apiportal.api.ApiModels.ApiDto;
 import com.example.apiportal.api.ApiModels.ApplicationDto;
+import com.example.apiportal.api.ApiModels.DeploymentDto;
 import com.example.apiportal.api.ApiModels.EnvironmentDto;
 import com.example.apiportal.api.ApiModels.GatewayDto;
 import com.example.apiportal.api.ApiModels.GatewayInfoDto;
@@ -143,12 +144,59 @@ public class CatalogQueryService {
                                 .filter(other -> other.name() != null && other.name().equalsIgnoreCase(api.name())
                                         && other.version() != null)
                                 .sorted(Comparator.comparing(ApiSummary::version, VersionComparator.INSTANCE))
-                                .map(other -> new PresenceVersionDto(other.id(), other.version()))
+                                .map(other -> presenceOf(other, state.snapshot()))
                                 .toList()))
                 .toList();
         return new ApiDetailDto(toApiDto(api, snapshot),
                 snapshot.revisionsOf(api.id()).stream().map(CatalogQueryService::toDto).toList(), presence,
                 gatewayUrlsOf(environment, snapshot, api));
+    }
+
+    /** Version présente dans un environnement, avec sa dernière révision déployée. */
+    private static PresenceVersionDto presenceOf(ApiSummary api, CatalogSnapshot snapshot) {
+        DeploymentDto last = snapshot.revisionsOf(api.id()).stream()
+                .map(revision -> deploymentOf("", "", api, revision))
+                .filter(Objects::nonNull)
+                .max(Comparator.comparing(DeploymentDto::deployedTime))
+                .orElse(null);
+        return new PresenceVersionDto(api.id(), api.version(), last == null ? null : last.revision(),
+                last == null ? null : last.deployedTime());
+    }
+
+    /**
+     * Derniers déploiements de révision, tous environnements confondus, du plus récent au plus ancien. Un
+     * déploiement par révision et par environnement ; sa date est celle de la gateway la plus récente.
+     */
+    public List<DeploymentDto> recentDeployments(int limit) {
+        List<DeploymentDto> result = new ArrayList<>();
+        for (EnvironmentState state : store.all()) {
+            CatalogSnapshot snapshot = state.snapshot();
+            for (ApiSummary api : snapshot.apis()) {
+                snapshot.revisionsOf(api.id()).stream()
+                        .map(revision -> deploymentOf(state.key(), state.label(), api, revision))
+                        .filter(Objects::nonNull)
+                        .forEach(result::add);
+            }
+        }
+        return result.stream()
+                .sorted(Comparator.comparing(DeploymentDto::deployedTime).reversed())
+                .limit(limit)
+                .toList();
+    }
+
+    /** Nul si la révision n'a aucune date de déploiement exploitable. */
+    private static DeploymentDto deploymentOf(String environment, String label, ApiSummary api, Revision revision) {
+        List<RevisionDeployment> deployments = revision.deploymentInfo() == null ? List.of()
+                : revision.deploymentInfo().stream().filter(d -> d.deployedTime() != null && !d.deployedTime().isBlank())
+                        .toList();
+        if (deployments.isEmpty()) {
+            return null;
+        }
+        String latest = deployments.stream().map(RevisionDeployment::deployedTime).max(Comparator.naturalOrder())
+                .orElseThrow();
+        return new DeploymentDto(environment, label, api.id(), api.name(), api.version(), revision.displayName(),
+                deployments.stream().map(RevisionDeployment::name).filter(Objects::nonNull).distinct().toList(),
+                latest);
     }
 
     public List<ApplicationDto> applications(String environment, String query) {

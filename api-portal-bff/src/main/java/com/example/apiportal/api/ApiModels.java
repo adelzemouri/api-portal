@@ -52,7 +52,17 @@ public final class ApiModels {
     public record PresenceDto(String environment, String label, boolean stale, List<PresenceVersionDto> versions) {
     }
 
-    public record PresenceVersionDto(String apiId, String version) {
+    /**
+     * {@code revision} : nom de la dernière révision déployée sur une gateway, {@code deployedTime} : date de ce
+     * déploiement ; nuls si aucune révision n'est déployée. Le numéro de version ne change pas d'un environnement à
+     * l'autre : c'est la révision qui dit où en est chaque environnement.
+     */
+    public record PresenceVersionDto(String apiId, String version, String revision, String deployedTime) {
+    }
+
+    /** Déploiement d'une révision dans un environnement, pour le fil d'activité. */
+    public record DeploymentDto(String environment, String label, String apiId, String apiName, String apiVersion,
+                                String revision, List<String> gateways, String deployedTime) {
     }
 
     /** Ce que la ligne d'API ne porte pas : où elle est déployée, et où elle existe ailleurs. */
