@@ -332,7 +332,8 @@
   --st-bg: var(--ds-surface-2); --st-node: var(--ds-surface); --st-line: var(--ds-line-strong); --st-ring: var(--ds-line);
   --st-fg: var(--ds-text); --st-muted: var(--ds-text-2); --st-or: var(--ds-signal); --st-ok: var(--ds-ok); --st-err: var(--ds-err); --st-warn: var(--ds-warn);
 }
-:root[data-design="b"] .understand-wso2-native-panel { padding: var(--ds-panel-pad); }
+/* Le guide n'est plus un grand panneau : chacun de ses diagrammes est sa propre tuile (stylée dans le Shadow DOM) */
+:root[data-design="b"] section.panel.help.understand-wso2-native-panel { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; overflow: visible; }
 :root[data-design="b"] .page-head h2[data-title] { display: flex; align-items: center; gap: var(--ds-s3); font-size: 0; }
 :root[data-design="b"] .page-head h2[data-title]::before { content: attr(data-title); font-size: var(--ds-fs-h1); line-height: 1.2; }
 :root[data-design="b"] .page-head h2[data-env]::after {
@@ -351,6 +352,17 @@
 :root[data-design="b"] dl.conn :is(dd:has(> .url), .conn-line) > app-copy-button { grid-column: 3; grid-row: 1; display: grid; }
 :root[data-design="b"] dl.conn app-copy-button button.copy { margin: 0; }
 :root[data-design="b"] dl.conn .conn-hint { margin-top: var(--ds-s3); }
+
+/* B — logo : un nœud relié à trois autres (vue croisée), le centre dans la couleur d'accent.
+   Le SVG d'origine reste dans le DOM ; son tracé est masqué et remplacé par une image de fond. */
+:root[data-design="b"] {
+  --ds-logo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%2318191b' stroke-width='2' stroke-linecap='round' d='M12 12 5.2 6.4M12 12l7.2-4.2M12 12l.8 7.6'/%3E%3Cg fill='%2318191b'%3E%3Ccircle cx='5' cy='6.2' r='2.1'/%3E%3Ccircle cx='19.4' cy='7.7' r='2.1'/%3E%3Ccircle cx='12.8' cy='19.8' r='2.1'/%3E%3C/g%3E%3Ccircle cx='12' cy='12' r='3.2' fill='%23e2600f'/%3E%3C/svg%3E");
+}
+:root[data-design="b"][data-theme="dark"] {
+  --ds-logo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ededed' stroke-width='2' stroke-linecap='round' d='M12 12 5.2 6.4M12 12l7.2-4.2M12 12l.8 7.6'/%3E%3Cg fill='%23ededed'%3E%3Ccircle cx='5' cy='6.2' r='2.1'/%3E%3Ccircle cx='19.4' cy='7.7' r='2.1'/%3E%3Ccircle cx='12.8' cy='19.8' r='2.1'/%3E%3C/g%3E%3Ccircle cx='12' cy='12' r='3.2' fill='%23f2b632'/%3E%3C/svg%3E");
+}
+:root[data-design="b"] svg.brand-mark > * { display: none; }
+:root[data-design="b"] svg.brand-mark { width: 26px; min-width: 26px; height: 26px; background: var(--ds-logo) center / contain no-repeat; }
 
 /* B — illustrations de fond de certaines tuiles (générées par tools/build-art.py, une variante par atmosphère).
    Décor pur : aucune information n'y figure. Affichées seulement quand la tuile a la place (≥ 1280 px).

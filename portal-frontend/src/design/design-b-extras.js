@@ -8,7 +8,7 @@
  *   - les titres de page deviennent factuels : nom de la rubrique (libellé de navigation actif)
  *     et environnement courant, exposés en data-title / data-env sur le <h2> ;
  *   - le guide « Comprendre WSO2 » de la page d'aide (Shadow DOM) reçoit une feuille de style
- *     sobre : plus d'accroche, de numéros géants, de halos ni de boutons orange ;
+ *     sobre et chaque diagramme devient une tuile titrée comme les autres sections ;
  *   - un bouton Copier dont le libellé a changé (copie réussie) est marqué data-copied,
  *     quelle que soit la langue, pour que le pictogramme passe à la coche.
  * Isolé : aucun import, aucun appel réseau, aucun événement applicatif intercepté.
@@ -53,7 +53,7 @@
   const GUIDE_CSS = `
     .native-guide-body { padding: 0; background: transparent; font: inherit; font-size: 14px; line-height: 1.55; }
     .wrap { max-width: none; padding-block: 0; }
-    header, .ch-num { display: none; }
+    header, .ch-num, .chap-nav { display: none; }
     h2, h3, .stat b, .kpi, .verdict .big, .chap-nav a, .motion-control, .seg button, .scen button { font-family: inherit !important; }
     .chap-nav { position: static; margin: 0; padding: 0 0 10px; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 1px solid var(--border); }
     .chap-nav ol { max-width: none; gap: 20px; }
@@ -62,13 +62,14 @@
     .chap-nav a span, .chap-nav a.on span { width: auto; height: auto; background: none; color: var(--muted); font-family: var(--mono); font-size: 12px; }
 
     /* Un chapitre = un texte à gauche, sa figure à droite : la scène n'occupe plus toute la largeur */
-    .chapter { display: grid; grid-template-columns: minmax(200px, 250px) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 0; padding: 24px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 80px; }
-    .chapter:last-child { padding-bottom: 0; border-bottom: 0; }
+    /* Chaque diagramme est une tuile comme les autres sections de l'aide : sur-titre, titre, contenu */
+    .chapter { display: grid; grid-template-columns: minmax(200px, 250px) minmax(0, 1fr); gap: 28px; align-items: start; margin: 0 0 var(--ds-gap); padding: var(--ds-panel-pad);
+      background: var(--ds-panel-bg, var(--ds-surface)); border: var(--ds-panel-border); border-radius: var(--ds-r-lg); box-shadow: var(--ds-panel-shadow, none); scroll-margin-top: 80px; }
     .ch-head { display: block; margin: 0; }
-    .ch-head h2 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font-size: 15px; font-weight: 500; line-height: 1.35; letter-spacing: -0.01em; }
+    .ch-head h2 { margin: 0 0 10px; font-size: var(--ds-fs-h2); font-weight: var(--ds-fw-strong); line-height: 1.35; letter-spacing: -0.01em; color: var(--ds-text); }
     .ch-head h2[data-title] { font-size: 0; }
-    .ch-head h2[data-title]::before { content: attr(data-num); font: 400 12px/1.35 var(--mono); color: var(--muted); }
-    .ch-head h2[data-title]::after { content: attr(data-title); font-size: 15px; }
+    .ch-head h2[data-title]::before { content: attr(data-kicker); display: block; margin-bottom: 2px; font: 400 var(--ds-label-size)/1.4 var(--ds-font-mono); letter-spacing: 0; color: var(--ds-text-3); }
+    .ch-head h2[data-title]::after { content: attr(data-title); font-size: var(--ds-fs-h2); }
     .ch-head p { max-width: none; font-size: 13px; line-height: 1.55; }
     @media (max-width: 900px) { .chapter { grid-template-columns: minmax(0, 1fr); gap: 14px; } }
 
@@ -89,7 +90,7 @@
     .chips-legend { padding: 0 14px 12px; }
     .chips-legend span { font-size: 12px; }
     .live { gap: 10px; padding: 0 14px 14px; }
-    svg [stroke="rgba(200,205,212,0.2)"] { stroke: var(--st-line); }
+    svg [stroke="rgba(200,205,212,0.2)"] { stroke: color-mix(in srgb, var(--st-fg) 24%, transparent); }
     svg [style*="rgb(207, 212, 218)"] { fill: var(--st-muted) !important; }
     .nd { stroke-width: 1; }
     .nd-or, .app-node.sel rect { fill: color-mix(in srgb, var(--st-or) 12%, var(--st-node)); }
@@ -110,11 +111,13 @@
     .scen button:hover { background: color-mix(in srgb, var(--st-fg) 5%, var(--st-node)); }
     .scen button[aria-pressed="true"] { background: var(--st-node); box-shadow: 0 0 0 1px var(--st-fg) inset; }
     .scen .code { background: color-mix(in srgb, var(--st-fg) 8%, transparent); }
-    .console { height: auto; min-height: 170px; overflow: visible; border-radius: 7px; font-size: 12px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }
+    /* Hauteurs fixes : la scène ne doit pas grandir ni rétrécir pendant qu'elle joue */
+    .stage-bar { min-height: 60px; }
+    .console, .verdict { height: 214px; min-height: 0; overflow: hidden; }
+    .console { border-radius: 7px; font-size: 12px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }
     .console::before { content: none; }
     .console .out { color: var(--st-fg); } .console .in { color: var(--st-muted); } .console .note { color: var(--st-or); }
     .verdict, .card-app { min-height: 0; border-radius: 7px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }
-    .verdict { min-height: 170px; }
     .verdict .big { font-size: 18px; font-weight: 600; letter-spacing: 0; }
     .verdict h3 { font-size: 14px; font-weight: 500; }
     .verdict p { font-size: 13px; color: var(--st-muted); }
@@ -129,6 +132,12 @@
     .pk-halo { display: none; }
     .fade-in, .console div { animation-duration: .15s; }
   `;
+  /* Textes à reporter dans les fichiers de traduction du front à l'intégration */
+  const GUIDE_TITLES = {
+    c1: { en: ['Platform', 'Role of the API gateway'], fr: ['Plateforme', 'Rôle de la gateway API'] },
+    c3: { en: ['Runtime', 'Anatomy of an API call'], fr: ['Exécution', 'Déroulé d’un appel d’API'] },
+    c5: { en: ['Consumers', 'Applications subscribed to an API'], fr: ['Consommateurs', 'Applications abonnées à une API'] },
+  };
   let guideSheet = null;
   const watched = new WeakSet();
   const schedule = () => { if (!queued) { queued = true; requestAnimationFrame(mirrorEta); } };
@@ -142,16 +151,19 @@
     if (!on && has) shadow.adoptedStyleSheets = shadow.adoptedStyleSheets.filter((x) => x !== guideSheet);
     /* Le guide se redessine au changement de langue : on le suit pour reposer les titres */
     if (!watched.has(shadow)) { watched.add(shadow); new MutationObserver(schedule).observe(shadow, { subtree: true, childList: true }); }
-    /* Titre de chapitre = libellé de son lien dans la navigation du guide, pour qu'ils disent la même chose */
-    for (const link of shadow.querySelectorAll('.chap-nav a[href^="#"]')) {
-      const heading = shadow.querySelector(`${link.getAttribute('href')} .ch-head h2`);
+    /* Sur-titre et titre de chaque diagramme, au même format que les autres tuiles (« Reference / Environments ») */
+    /* Langue courante : le choix mémorisé par l'application, sinon le libellé du champ de recherche */
+    let stored = null;
+    try { stored = localStorage.getItem('api-portal-language'); } catch { /* stockage indisponible */ }
+    const trigger = document.querySelector('.search-trigger');
+    const lang = (stored || (trigger && /^\s*recherch/i.test(trigger.textContent) ? 'fr' : 'en')).toLowerCase().startsWith('fr') ? 'fr' : 'en';
+    for (const [id, text] of Object.entries(GUIDE_TITLES)) {
+      const heading = shadow.querySelector(`#${id} .ch-head h2`);
       if (!heading) continue;
-      const num = link.querySelector('span');
-      const title = [...link.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim();
-      if (on && title) {
-        if (heading.getAttribute('data-title') !== title) heading.setAttribute('data-title', title);
-        if (num && heading.getAttribute('data-num') !== num.textContent.trim()) heading.setAttribute('data-num', num.textContent.trim());
-      } else { heading.removeAttribute('data-title'); heading.removeAttribute('data-num'); }
+      const [kicker, title] = on ? text[lang] : ['', ''];
+      for (const [name, value] of [['data-kicker', kicker], ['data-title', title]]) {
+        if (!value) heading.removeAttribute(name); else if (heading.getAttribute(name) !== value) heading.setAttribute(name, value);
+      }
     }
   }
 
@@ -162,5 +174,5 @@
       r.target.toggleAttribute('data-copied', r.target.getAttribute('aria-label') !== restLabel.get(r.target));
     }
     schedule();
-  }).observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: ['aria-label', 'data-design', 'class', 'aria-pressed'] });
+  }).observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: ['aria-label', 'data-design', 'class', 'aria-pressed', 'lang'] });
 })();
