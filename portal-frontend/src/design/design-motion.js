@@ -60,10 +60,24 @@
   ];
   const last = new WeakMap();
 
-  function glide(container, from, to, axis) {
+  /* Glissements partis au clic, en attente que l'application confirme le nouvel élément actif */
+  const pending = new WeakMap();
+
+  function settle(container) {
+    const p = pending.get(container);
+    if (!p) return;
+    pending.delete(container);
+    clearTimeout(p.timer);
+    p.thumb.remove();
+    p.to.removeAttribute('data-motion-landing');
+    p.from.removeAttribute('data-motion-leaving');
+  }
+
+  function glide(container, from, to, axis, hold) {
     const box = container.getBoundingClientRect();
     const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
     if (!a.width || !b.width) return;
+    settle(container);
     container.querySelectorAll(':scope > .motion-thumb').forEach((t) => t.remove());
     const thumb = document.createElement('span');
     thumb.className = 'motion-thumb';
@@ -75,6 +89,14 @@
     /* À mi-course : étiré de 12 % dans le sens du mouvement, décalé de 3 px pour dessiner une courbe */
     const mid = axis === 'x' ? `translate(${dx / 2}px, -3px) scale(1.12, 1)` : `translate(3px, ${dy / 2}px) scale(1, 1.12)`;
     const anim = thumb.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: mid }, { transform: 'none' }], { duration: 280, easing: IN_OUT });
+    if (hold) {
+      /* Parti au clic : la pastille reste posée jusqu'à ce que l'application rende l'élément actif */
+      from.setAttribute('data-motion-leaving', '');
+      pending.set(container, { thumb, from, to, done: false, timer: setTimeout(() => settle(container), 2500) });
+      const arrived = () => { const p = pending.get(container); if (p && p.thumb === thumb) { p.done = true; if (p.confirmed) settle(container); } };
+      anim.finished.then(arrived, arrived);
+      return;
+    }
     const done = () => { thumb.remove(); to.removeAttribute('data-motion-landing'); };
     anim.finished.then(done, done);
     setTimeout(done, 400);
@@ -86,10 +108,26 @@
       if (!container) continue;
       const now = container.querySelector(g.current);
       const before = last.get(container);
-      if (animate && now && before && before !== now && before.isConnected) glide(container, before, now, g.axis);
+      const p = pending.get(container);
+      if (p && now === p.to) { p.confirmed = true; if (p.done) settle(container); }
+      else if (p && now && now !== p.from) settle(container);
+      if (animate && now && before && before !== now && before.isConnected && !pending.has(container) && !(p && now === p.to)) glide(container, before, now, g.axis, false);
       if (now) last.set(container, now);
     }
   }
+
+  /* Le glissement part au clic, sans attendre que la page demandée soit chargée et rendue :
+     sinon la pastille ne bouge qu'après le rendu, ce qui se lit comme une latence. On n'intercepte rien. */
+  document.addEventListener('click', (event) => {
+    if (!active() || !(event.target instanceof Element)) return;
+    for (const g of GROUPS) {
+      const container = document.querySelector(g.container);
+      const to = container && event.target.closest(`${g.container} > button`);
+      if (!to || to.disabled) continue;
+      const from = container.querySelector(g.current);
+      if (from && from !== to) { glide(container, from, to, g.axis, true); last.set(container, to); }
+    }
+  }, true);
 
   /* ---------- Réussite d'une copie ---------- */
   const restLabel = new WeakMap();

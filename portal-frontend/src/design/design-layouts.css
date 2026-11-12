@@ -333,6 +333,7 @@
   --st-fg: var(--ds-text); --st-muted: var(--ds-text-2); --st-or: var(--ds-signal); --st-ok: var(--ds-ok); --st-err: var(--ds-err); --st-warn: var(--ds-warn);
 }
 /* Le guide n'est plus un grand panneau : chacun de ses diagrammes est sa propre tuile (stylée dans le Shadow DOM) */
+:root[data-design="b"] .understand-wso2-native-panel .understand-wso2-native { background: none; }
 :root[data-design="b"] section.panel.help.understand-wso2-native-panel { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; overflow: visible; }
 :root[data-design="b"] .page-head h2[data-title] { display: flex; align-items: center; gap: var(--ds-s3); font-size: 0; }
 :root[data-design="b"] .page-head h2[data-title]::before { content: attr(data-title); font-size: var(--ds-fs-h1); line-height: 1.2; }
