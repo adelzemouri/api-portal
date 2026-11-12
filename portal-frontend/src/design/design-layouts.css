@@ -311,7 +311,8 @@
   -webkit-mask: var(--ds-icon-copy) center / contain no-repeat; mask: var(--ds-icon-copy) center / contain no-repeat;
 }
 :root[data-design="b"] button.copy:hover { color: var(--ds-text); }
-:root[data-design="b"] button.copy:is([data-copied], [aria-label^="Copied"], [aria-label^="Copié"]) { color: var(--ds-ok); }
+/* .copy répété : doit l'emporter sur la couleur de survol des boutons en relief */
+:root[data-design="b"] button.copy.copy.copy:is([data-copied], [aria-label^="Copied"], [aria-label^="Copié"]) { color: var(--ds-ok); }
 :root[data-design="b"] button.copy:is([data-copied], [aria-label^="Copied"], [aria-label^="Copié"])::before { -webkit-mask-image: var(--ds-icon-check); mask-image: var(--ds-icon-check); }
 :root[data-design="b"] {
   --ds-icon-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2.5'/%3E%3Cpath d='M5.5 15H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 4h8a1.5 1.5 0 0 1 1.5 1.5V6'/%3E%3C/svg%3E");
