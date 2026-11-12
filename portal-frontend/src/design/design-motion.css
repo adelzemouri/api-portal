@@ -1,0 +1,79 @@
+/*
+ * Animations du design B (Graphite Premium).
+ *
+ * Règles suivies : entrées en ease-out, menus entre 150 et 250 ms, lignes décalées de 30 ms,
+ * boutons à 0,97 à l'appui, popovers partant de 0,95 depuis leur déclencheur, aucun ressort sur
+ * les transitions (courbes sans dépassement), du poids pour les révélations (volet plus lent).
+ * Les sorties, le déplacement partagé de l'élément actif, la pulsation de réussite et l'élastique
+ * aux limites demandent un peu de script : voir design-motion.js.
+ *
+ * Tout est neutralisé si l'utilisateur a demandé moins d'animations au système.
+ */
+:root[data-design="b"] {
+  --m-out: cubic-bezier(0.22, 1, 0.36, 1);      /* entrées : décélère, sans dépassement */
+  --m-in-out: cubic-bezier(0.65, 0, 0.35, 1);   /* ce qui se déplace d'un point à un autre */
+  --m-press: 110ms; --m-menu: 200ms; --m-reveal: 320ms; --m-stagger: 30ms;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ---------- Appui : 0,97 ---------- */
+  :root[data-design="b"] :is(.btn, .pager-buttons button, .env-compare-table button, .user-menu-trigger, button.copy, .chip, .nav-link, .env-switch button, .icon-btn, .search-trigger, .palette-option, .user-menu-logout, .lang-toggle, .theme-toggle) {
+    transition: transform var(--m-press) var(--m-out), box-shadow var(--ds-dur) var(--ds-ease), background-color var(--ds-dur) var(--ds-ease), color var(--ds-dur) var(--ds-ease), border-color var(--ds-dur) var(--ds-ease);
+  }
+  :root[data-design="b"] :is(.btn, .pager-buttons button, .env-compare-table button, .user-menu-trigger, button.copy, .chip, .nav-link, .env-switch button, .icon-btn, .search-trigger, .palette-option, .user-menu-logout, .lang-toggle, .theme-toggle):active:not(:disabled) { transform: scale(0.97); }
+
+  /* ---------- Popovers : 0,95, depuis leur déclencheur ---------- */
+  @keyframes b-pop-in { from { opacity: 0; transform: scale(0.95); } }
+  @keyframes b-fade-in { from { opacity: 0; } }
+  :root[data-design="b"] .user-menu-panel { transform-origin: calc(100% - 24px) 0; animation: b-pop-in var(--m-menu) var(--m-out) backwards; }
+  :root[data-design="b"] .user-menu-caret { display: inline-block; transition: transform var(--m-menu) var(--m-in-out); }
+  :root[data-design="b"] .user-menu.open .user-menu-caret { transform: rotate(180deg); }
+  :root[data-design="b"] .palette-backdrop { animation: b-fade-in var(--m-menu) var(--m-out) backwards; }
+  :root[data-design="b"] .palette { transform-origin: 18% 0; animation: b-pop-in 220ms var(--m-out) backwards; }
+
+  /* ---------- Révélations : le volet a du poids (plus lent, plus de course) ---------- */
+  @keyframes b-drawer-in { from { opacity: 0; transform: translateX(40px) scale(0.985); } }
+  :root[data-design="b"] .side-drawer { transform-origin: 100% 50%; animation: b-drawer-in var(--m-reveal) var(--m-out) backwards; }
+  :root[data-design="b"] .drawer-backdrop { animation: b-fade-in var(--m-reveal) var(--m-out) backwards; }
+  @keyframes b-rise { from { opacity: 0; transform: translateY(10px); } }
+  :root[data-design="b"] .side-drawer-body > .drawer-section { animation: b-rise 300ms var(--m-out) backwards; animation-delay: calc(60ms + var(--m-i, 0) * var(--m-stagger)); }
+
+  /* ---------- Pages : les blocs montent l'un après l'autre ---------- */
+  :root[data-design="b"] main > :not(router-outlet, .banner) > :not(.side-drawer, .drawer-backdrop) { animation: b-rise 340ms var(--m-out) backwards; animation-delay: calc(var(--m-i, 0) * var(--m-stagger)); }
+
+  /* ---------- Lignes décalées de 30 ms ---------- */
+  @keyframes b-row-in { from { opacity: 0; transform: translateY(6px); } }
+  :root[data-design="b"] :is(table.list > tbody > tr, .env-compare-table tbody tr, .focus-item, .splunk-metric-card, .palette-option) {
+    animation: b-row-in 260ms var(--m-out) backwards; animation-delay: calc(90ms + var(--m-i, 0) * var(--m-stagger));
+  }
+  :root[data-design="b"] .palette-option { animation-delay: calc(var(--m-i, 0) * var(--m-stagger)); }
+  /* Rang de l'élément dans sa fratrie ; plafonné pour que les longues listes n'attendent pas */
+  :root[data-design="b"] :nth-child(2) { --m-i: 1; } :root[data-design="b"] :nth-child(3) { --m-i: 2; }
+  :root[data-design="b"] :nth-child(4) { --m-i: 3; } :root[data-design="b"] :nth-child(5) { --m-i: 4; }
+  :root[data-design="b"] :nth-child(6) { --m-i: 5; } :root[data-design="b"] :nth-child(7) { --m-i: 6; }
+  :root[data-design="b"] :nth-child(8) { --m-i: 7; } :root[data-design="b"] :nth-child(9) { --m-i: 8; }
+  :root[data-design="b"] :nth-child(10) { --m-i: 9; } :root[data-design="b"] :nth-child(11) { --m-i: 10; }
+  :root[data-design="b"] :nth-child(12) { --m-i: 11; } :root[data-design="b"] :nth-child(n + 13) { --m-i: 12; }
+  :root[data-design="b"] :first-child { --m-i: 0; }
+
+  /* ---------- Jauges : se remplissent à l'arrivée ---------- */
+  @keyframes b-fill { from { transform: scaleX(0); } }
+  :root[data-design="b"] .splunk-meter span { transform-origin: 0 50%; animation: b-fill 700ms var(--m-out) backwards; animation-delay: 260ms; }
+
+  /* ---------- Fondu d'icônes avec flou (jour / nuit, langue) ---------- */
+  :root[data-design="b"] :is(.theme-option, .lang-toggle span) { transition: opacity 180ms var(--m-out), filter 180ms var(--m-out), transform 180ms var(--m-out); }
+  :root[data-design="b"] .theme-toggle[aria-pressed="true"] .theme-option:first-child,
+  :root[data-design="b"] .theme-toggle[aria-pressed="false"] .theme-option:last-child,
+  :root[data-design="b"] .lang-toggle span:not(.active) { opacity: 0.4; filter: blur(1.5px); transform: scale(0.9); }
+
+  /* ---------- Déplacement partagé de l'élément actif (posé par design-motion.js) ---------- */
+  :root[data-design="b"] :is(.sidebar nav, .env-switch) { position: relative; }
+  :root[data-design="b"] :is(.sidebar nav, .env-switch) > button { position: relative; z-index: 1; }
+  :root[data-design="b"] .motion-thumb { position: absolute; z-index: 0; margin: 0; pointer-events: none; background: var(--ds-raise-bg); border: 1px solid var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
+  :root[data-design="b"] .sidebar nav > button[data-motion-landing] { background: transparent; border-color: transparent; box-shadow: none; }
+  :root[data-design="b"] .env-switch > button[data-motion-landing],
+  :root[data-design="b"] .env-switch > button[data-motion-landing]:hover { background: transparent !important; box-shadow: none !important; }
+}
+
+/* Copies de sortie : inertes, jamais ré-animées par les règles d'entrée ci-dessus */
+:root[data-design] [data-motion-ghost], :root[data-design] [data-motion-ghost] * { animation: none !important; pointer-events: none !important; }

@@ -23,6 +23,9 @@ design/
   design-tokens.css       le contrat de tokens --ds-* et ses 4 jeux de valeurs (+ mode nuit)
   design-components.css   composants : ne lisent QUE des tokens, communs aux 4 designs
   design-layouts.css      variantes de navigation / grille / volet, une section par design
+  design-motion.css       animations du design B (entrées, décalages, appui, popovers)
+  design-motion.js        animations du design B qui demandent du script (sorties, élément actif partagé,
+                          pulsation de réussite, élastique aux limites) ; isolé, sans dépendance
   art/                    illustrations de fond des tuiles (B), une variante jour et une nuit
   design-switcher.js      sélecteur temporaire (isolé, Shadow DOM, sans dépendance)
   tools/build-preview.py  injecte le tout dans un export statique, pour démonstration
@@ -43,8 +46,8 @@ Dans `angular.json`, cible `build` (et `test`) :
 
 ```json
 "styles": ["src/styles.css", "src/design/design-fonts.css", "src/design/design-tokens.css",
-           "src/design/design-components.css", "src/design/design-layouts.css"],
-"scripts": ["src/design/design-switcher.js"]
+           "src/design/design-components.css", "src/design/design-layouts.css", "src/design/design-motion.css"],
+"scripts": ["src/design/design-switcher.js", "src/design/design-motion.js"]
 ```
 
 Les sélecteurs visent les classes de la version du front dont provient l'export statique
@@ -58,6 +61,18 @@ Les sélecteurs visent les classes de la version du front dont provient l'export
   Les vignettes sont l'application réelle, navigables ; on ajoute ou retire une version depuis la barre du haut.
 - Le choix est mémorisé (`localStorage`, clé `api-portal-design`) et suit la navigation.
 
+## Animations (design B)
+
+Règles appliquées : entrées en ease-out, menus en 200 ms, lignes décalées de 30 ms, appui à 0,97, popovers
+depuis 0,95 et depuis leur déclencheur, sorties 20 % plus courtes et vers le déclencheur, aucun ressort sur les
+transitions, volet plus lent (poids), jauges qui se remplissent, fondu flouté des icônes jour / nuit et du libellé
+« Copy », pulsation à la réussite d'une copie, élastique en bout de défilement du volet et de la palette, pastille
+de l'élément actif qui glisse (navigation, environnement) en ease-in-out, étirée de 12 % sur une légère courbe.
+
+Tout est coupé par `prefers-reduced-motion`. `design-motion.js` n'intercepte aucun événement de l'application : il
+observe le DOM et ajoute des copies inertes. À l'intégration définitive, préférer `animate.leave` pour les sorties
+et `withViewTransitions()` sur le routeur, plus robustes que des copies.
+
 ## Vérification
 
 `node tools/verify-parity.js <export-avec-design.html>` : changement d'environnement, filtres, tri,
@@ -70,5 +85,5 @@ Résultat attendu : `IDENTIQUE à l'original` pour A, B, C et D.
 2. Supprimer `design-switcher.js` et son entrée `scripts` dans `angular.json`.
 3. `design-tokens.css` : supprimer les blocs des trois autres directions.
 4. `design-layouts.css` : supprimer les sections des trois autres directions.
-5. `design-fonts.css` et `fonts/` : ne garder que les polices de la direction retenue ; supprimer `art/` si B n'est pas retenue.
+5. `design-fonts.css` et `fonts/` : ne garder que les polices de la direction retenue ; supprimer `art/`, `design-motion.css` et `design-motion.js` si B n'est pas retenue.
 6. Facultatif : retirer le préfixe `:root[data-design]` et fusionner dans `styles.css`.
