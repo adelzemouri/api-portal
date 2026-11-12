@@ -323,9 +323,14 @@
 /* B — en-têtes de page factuels : le nom de la rubrique, l'environnement en pastille, pas de phrase d'accroche.
    Le titre affiché vient de data-title / data-env, posés par design-b-extras.js à partir du libellé de
    navigation actif (donc traduit) ; le texte d'origine reste dans le DOM. */
-:root[data-design="b"] .page-head :is(.lede, .page-kicker), :root[data-design="b"] .help-page-head .eyebrow { display: none; }
-:root[data-design="b"] .page-head-row > div { display: flex; flex-direction: column; }
-:root[data-design="b"] .page-head-row .eyebrow { order: 2; margin: var(--ds-s2) 0 0; }
+/* Le sur-titre répétait l'environnement déjà porté par la pastille ; le décompte reste dans le pied du tableau. */
+:root[data-design="b"] .page-head :is(.lede, .page-kicker, .eyebrow) { display: none; }
+/* Guide de l'aide : ses scènes prennent les surfaces de l'application, jour et nuit (le reste est dans design-b-extras.js) */
+:root[data-design="b"] .understand-wso2-native {
+  --st-bg: var(--ds-surface-2); --st-node: var(--ds-surface); --st-line: var(--ds-line-strong); --st-ring: var(--ds-line);
+  --st-fg: var(--ds-text); --st-muted: var(--ds-text-2); --st-or: var(--ds-signal); --st-ok: var(--ds-ok); --st-err: var(--ds-err); --st-warn: var(--ds-warn);
+}
+:root[data-design="b"] .understand-wso2-native-panel { padding: var(--ds-panel-pad); }
 :root[data-design="b"] .page-head h2[data-title] { display: flex; align-items: center; gap: var(--ds-s3); font-size: 0; }
 :root[data-design="b"] .page-head h2[data-title]::before { content: attr(data-title); font-size: var(--ds-fs-h1); line-height: 1.2; }
 :root[data-design="b"] .page-head h2[data-env]::after {

@@ -52,38 +52,80 @@
   /* Guide de l'aide : documentation interne, pas une page d'atterrissage. La scène reste sombre dans les deux thèmes. */
   const GUIDE_CSS = `
     .native-guide-body { padding: 0; background: transparent; font: inherit; font-size: 14px; line-height: 1.55; }
-    .wrap { max-width: none; padding-block: 0 4px; }
-    header { display: none; }
+    .wrap { max-width: none; padding-block: 0; }
+    header, .ch-num { display: none; }
     h2, h3, .stat b, .kpi, .verdict .big, .chap-nav a, .motion-control, .seg button, .scen button { font-family: inherit !important; }
     .chap-nav { position: static; margin: 0; padding: 0 0 10px; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 1px solid var(--border); }
     .chap-nav ol { max-width: none; gap: 20px; }
     .chap-nav a, .chap-nav a.on { padding: 4px 0; gap: 6px; border-radius: 0; font-size: 13px; font-weight: 450; background: none; box-shadow: none; }
     .chap-nav a.on { color: var(--fg); }
     .chap-nav a span, .chap-nav a.on span { width: auto; height: auto; background: none; color: var(--muted); font-family: var(--mono); font-size: 12px; }
-    .chapter { margin-top: 32px; scroll-margin-top: 80px; }
-    .ch-head { grid-template-columns: minmax(0, 1fr); gap: 4px; margin-bottom: 14px; }
-    .ch-num { grid-row: auto; font: 400 12px/1.4 var(--mono); letter-spacing: 0; color: var(--muted); -webkit-text-stroke: 0; }
-    .ch-head h2 { font-size: 16px; font-weight: 500; line-height: 1.35; letter-spacing: -0.01em; }
-    .ch-head p { max-width: 80ch; font-size: 14px; }
-    .stage { border-radius: 10px; background: var(--st-bg); box-shadow: 0 0 0 1px var(--st-ring) inset; }
-    .motion-control, .motion-control[data-playing="true"] { min-height: 30px; padding: 6px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--st-fg); background: rgba(255,255,255,.07); box-shadow: 0 0 0 1px rgba(255,255,255,.14) inset; }
+
+    /* Un chapitre = un texte à gauche, sa figure à droite : la scène n'occupe plus toute la largeur */
+    .chapter { display: grid; grid-template-columns: minmax(200px, 250px) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 0; padding: 24px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 80px; }
+    .chapter:last-child { padding-bottom: 0; border-bottom: 0; }
+    .ch-head { display: block; margin: 0; }
+    .ch-head h2 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font-size: 15px; font-weight: 500; line-height: 1.35; letter-spacing: -0.01em; }
+    .ch-head h2[data-title] { font-size: 0; }
+    .ch-head h2[data-title]::before { content: attr(data-num); font: 400 12px/1.35 var(--mono); color: var(--muted); }
+    .ch-head h2[data-title]::after { content: attr(data-title); font-size: 15px; }
+    .ch-head p { max-width: none; font-size: 13px; line-height: 1.55; }
+    @media (max-width: 900px) { .chapter { grid-template-columns: minmax(0, 1fr); gap: 14px; } }
+
+    /* Scène : une figure posée sur la surface de l'app, plus de bloc noir */
+    .stage { max-width: 780px; border-radius: 9px; color: var(--st-fg); background: var(--st-bg); box-shadow: 0 0 0 1px var(--st-ring) inset; }
+    .stage svg { min-width: 560px; }
+    .stage-bar { padding: 12px 14px 0; gap: 10px; }
+    .stage-bar .seg { position: relative; left: auto; transform: none; }
+    .stat { flex: 1 1 220px; }
+    .stat span { max-width: 34ch; }
+    .motion-host { padding: 12px 14px 0; }
+    .chips-legend { padding: 0 14px 12px; }
+    .chips-legend span { font-size: 12px; }
+    .live { gap: 10px; padding: 0 14px 14px; }
+    svg [stroke="rgba(200,205,212,0.2)"] { stroke: var(--st-line); }
+    svg [style*="rgb(207, 212, 218)"] { fill: var(--st-muted) !important; }
+    .nd { stroke-width: 1; }
+    .nd-or, .app-node.sel rect { fill: color-mix(in srgb, var(--st-or) 12%, var(--st-node)); }
+    .pill-chk rect { fill: var(--st-node); }
+    .tt { font-weight: 500; }
+    .motion-control, .motion-control[data-playing="true"] { min-height: 28px; padding: 5px 10px; border-radius: 7px; font-size: 12px; font-weight: 500; color: var(--st-fg); background: var(--st-node); box-shadow: 0 0 0 1px var(--st-line) inset; }
     .motion-control::before { width: auto; height: auto; background: none; }
-    .motion-control:hover { transform: none; background: rgba(255,255,255,.11); }
-    .seg, .seg button, .seg i { border-radius: 8px; }
-    .seg button { padding: 6px 14px; font-size: 13px; font-weight: 500; }
-    .seg i, .seg i.off { background: rgba(255,255,255,.14); box-shadow: none; transition-duration: .2s; }
-    .stat b { font-size: 26px; font-weight: 500; letter-spacing: -0.02em; }
-    .scen button { border-radius: 7px; font-size: 13px; font-weight: 500; }
-    .scen button[aria-pressed="true"] { background: rgba(255,255,255,.1); box-shadow: 0 0 0 1px rgba(255,255,255,.32) inset; }
-    .console, .verdict, .card-app { border-radius: 8px; }
-    .verdict .big { font-size: 20px; font-weight: 600; letter-spacing: 0; }
+    .motion-control:hover { transform: none; background: color-mix(in srgb, var(--st-fg) 6%, var(--st-node)); }
+    .seg { padding: 3px; border-radius: 8px; background: color-mix(in srgb, var(--st-fg) 6%, transparent); box-shadow: 0 0 0 1px var(--st-ring) inset; }
+    .seg button { padding: 5px 12px; border-radius: 6px; font-size: 12.5px; font-weight: 500; }
+    .seg button[aria-pressed="true"] { color: var(--st-fg); }
+    .seg i, .seg i.off { top: 3px; bottom: 3px; left: 3px; border-radius: 6px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-line) inset; transition-duration: .2s; }
+    .stat { min-height: 0; gap: 8px; }
+    .stat b { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: var(--st-fg); }
+    .stat span { font-size: 12.5px; }
+    .scen { gap: 6px; }
+    .scen button { padding: 5px 10px; border-radius: 7px; font-size: 12.5px; font-weight: 500; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }
+    .scen button:hover { background: color-mix(in srgb, var(--st-fg) 5%, var(--st-node)); }
+    .scen button[aria-pressed="true"] { background: var(--st-node); box-shadow: 0 0 0 1px var(--st-fg) inset; }
+    .scen .code { background: color-mix(in srgb, var(--st-fg) 8%, transparent); }
+    .console { height: 170px; border-radius: 7px; font-size: 12px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }
+    .console::before { content: none; }
+    .console .out { color: var(--st-fg); } .console .in { color: var(--st-muted); } .console .note { color: var(--st-or); }
+    .verdict, .card-app { min-height: 0; border-radius: 7px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }
+    .verdict { min-height: 170px; }
+    .verdict .big { font-size: 18px; font-weight: 600; letter-spacing: 0; }
     .verdict h3 { font-size: 14px; font-weight: 500; }
-    .cons .side .kpi { font-size: 26px; font-weight: 500; letter-spacing: -0.02em; }
+    .verdict p { font-size: 13px; color: var(--st-muted); }
+    .verdict .fix { color: var(--st-or); }
+    .cons .side { padding: 16px; border-left-color: var(--st-ring); }
+    .cons .side .kpi { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
+    .card-app .nm { font-size: 14px; font-weight: 500; }
+    .b-ok { background: color-mix(in srgb, var(--st-ok) 14%, transparent); }
+
+    /* Animations : des points nets qui suivent leur trajet, sans halo, sans flash ni rebond */
     .flash, .flash-err { animation: none; }
     .pk-halo { display: none; }
     .fade-in, .console div { animation-duration: .15s; }
   `;
   let guideSheet = null;
+  const watched = new WeakSet();
+  const schedule = () => { if (!queued) { queued = true; requestAnimationFrame(mirrorEta); } };
   function guide(on) {
     const host = document.querySelector('.understand-wso2-native');
     const shadow = host && host.shadowRoot;
@@ -92,6 +134,19 @@
     const has = shadow.adoptedStyleSheets.includes(guideSheet);
     if (on && !has) shadow.adoptedStyleSheets = [...shadow.adoptedStyleSheets, guideSheet];
     if (!on && has) shadow.adoptedStyleSheets = shadow.adoptedStyleSheets.filter((x) => x !== guideSheet);
+    /* Le guide se redessine au changement de langue : on le suit pour reposer les titres */
+    if (!watched.has(shadow)) { watched.add(shadow); new MutationObserver(schedule).observe(shadow, { subtree: true, childList: true }); }
+    /* Titre de chapitre = libellé de son lien dans la navigation du guide, pour qu'ils disent la même chose */
+    for (const link of shadow.querySelectorAll('.chap-nav a[href^="#"]')) {
+      const heading = shadow.querySelector(`${link.getAttribute('href')} .ch-head h2`);
+      if (!heading) continue;
+      const num = link.querySelector('span');
+      const title = [...link.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim();
+      if (on && title) {
+        if (heading.getAttribute('data-title') !== title) heading.setAttribute('data-title', title);
+        if (num && heading.getAttribute('data-num') !== num.textContent.trim()) heading.setAttribute('data-num', num.textContent.trim());
+      } else { heading.removeAttribute('data-title'); heading.removeAttribute('data-num'); }
+    }
   }
 
   new MutationObserver((records) => {
@@ -100,6 +155,6 @@
       if (!restLabel.has(r.target)) restLabel.set(r.target, r.oldValue);
       r.target.toggleAttribute('data-copied', r.target.getAttribute('aria-label') !== restLabel.get(r.target));
     }
-    if (!queued) { queued = true; requestAnimationFrame(mirrorEta); }
+    schedule();
   }).observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: ['aria-label', 'data-design', 'class', 'aria-pressed'] });
 })();
