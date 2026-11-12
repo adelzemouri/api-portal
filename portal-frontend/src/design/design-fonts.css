@@ -1,5 +1,5 @@
 /*
- * Polices des quatre directions graphiques (toutes sous licence SIL OFL, auto-hébergées :
+ * Polices des cinq directions graphiques (toutes sous licence SIL OFL, auto-hébergées :
  * aucun appel vers un CDN, conforme au contexte bancaire). Sous-ensemble latin.
  * Une fois le design retenu, ne garder que les @font-face de la direction choisie.
  */
@@ -15,3 +15,6 @@
 @font-face { font-family: "Albert Sans Var"; src: url("fonts/albert-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
 /* D · Contemporary Enterprise */
 @font-face { font-family: "Archivo Var"; src: url("fonts/archivo-latin-standard-normal.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap; }
+/* E · Graphite */
+@font-face { font-family: "Geist Var"; src: url("fonts/geist-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono Var"; src: url("fonts/geist-mono-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }

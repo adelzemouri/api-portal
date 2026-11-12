@@ -1,15 +1,15 @@
 /*
- * Design tokens des quatre directions graphiques.
+ * Design tokens des cinq directions graphiques.
  *
- * Un seul contrat de tokens (--ds-*), quatre jeux de valeurs. Les composants (design-components.css)
+ * Un seul contrat de tokens (--ds-*), cinq jeux de valeurs. Les composants (design-components.css)
  * et les layouts (design-layouts.css) ne lisent que ces tokens : aucune couleur, taille ou rayon
- * n'y est écrit en dur. Le design actif est porté par <html data-design="a|b|c|d">, le mode
+ * n'y est écrit en dur. Le design actif est porté par <html data-design="a|b|c|d|e">, le mode
  * jour/nuit existant par data-theme="light|dark" (inchangé).
  *
  * Après le choix définitif : garder le bloc du design retenu (et son bloc dark), supprimer les autres.
  */
 
-/* ---------- Échelles communes aux quatre designs ---------- */
+/* ---------- Échelles communes aux cinq designs ---------- */
 :root[data-design] {
   /* Espacement : base 4 px */
   --ds-s1: 4px; --ds-s2: 8px; --ds-s3: 12px; --ds-s4: 16px; --ds-s5: 20px; --ds-s6: 24px; --ds-s7: 32px; --ds-s8: 40px; --ds-s9: 56px;
@@ -204,6 +204,50 @@
   --ds-nav-bg: #061011; --ds-nav-hover: #0f2325; --ds-nav-active-bg: #153235;
   --ds-top-bg: #0f1e20;
   --ds-shadow-2: 0 10px 28px rgb(0 0 0 / 55%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: -16px 0 40px rgb(0 0 0 / 45%);
+}
+
+/* =====================================================================
+   E · GRAPHITE — sombre par nature : graphite, filets discrets, linéale fine, libellés en mono
+   Le mode « jour » est le graphite ; le mode « nuit » pousse vers le noir profond.
+   ===================================================================== */
+:root[data-design="e"] {
+  --ds-font: "Geist Var", "Geist", "Segoe UI", system-ui, sans-serif;
+  --ds-font-display: var(--ds-font);
+  --ds-font-mono: "Geist Mono Var", "Geist Mono", ui-monospace, Consolas, monospace;
+  --ds-fs-base: 14px; --ds-fs-sm: 13px; --ds-fs-xs: 12px; --ds-fs-md: 15px;
+  --ds-fs-h1: 32px; --ds-fs-h2: 15px; --ds-fs-metric: 34px;
+  --ds-lh: 1.5;
+  --ds-fw-display: 400; --ds-fw-strong: 500; --ds-fw-medium: 450;
+  --ds-track-display: -0.02em;
+  --ds-label-size: 12px; --ds-label-weight: 400; --ds-label-track: 0; --ds-label-transform: none;
+
+  --ds-bg: #161616; --ds-surface: #1b1b1b; --ds-surface-2: #202020; --ds-surface-3: #272727;
+  --ds-text: #ededed; --ds-text-2: #a0a0a0; --ds-text-3: #707070;
+  --ds-line: #2a2a2a; --ds-line-strong: #383838;
+  --ds-accent: #ededed; --ds-accent-hover: #ffffff; --ds-accent-ink: #111111; --ds-accent-text: #ededed; --ds-accent-soft: #262626;
+  --ds-signal: #f2b632; --ds-brand: #f2b632;
+  --ds-sel-bg: #232323; --ds-sel-edge: #f2b632;
+  --ds-focus: #8ab4ff;
+  --ds-nav-bg: #101010; --ds-nav-text: #ededed; --ds-nav-muted: #a0a0a0; --ds-nav-hover: #1a1a1a; --ds-nav-active-bg: #212121; --ds-nav-line: #242424;
+  --ds-top-bg: #161616; --ds-top-text: var(--ds-text);
+  --ds-ok: #3ecf8e; --ds-ok-bg: #12261c; --ds-warn: #f2b632; --ds-warn-bg: #2a2212; --ds-err: #f2766e; --ds-err-bg: #2c1716;
+  --ds-overlay: rgb(0 0 0 / 60%);
+
+  --ds-r-sm: 6px; --ds-r-md: 9px; --ds-r-lg: 14px; --ds-r-pill: 6px;
+  --ds-shadow-1: none; --ds-shadow-2: 0 16px 40px rgb(0 0 0 / 55%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: 0 24px 64px rgb(0 0 0 / 60%), 0 0 0 1px var(--ds-line-strong);
+  --ds-panel-border: 1px solid var(--ds-line);
+
+  --ds-ctl-h: 36px; --ds-cell-y: 11px; --ds-cell-x: 14px; --ds-panel-pad: 22px; --ds-gap: 16px;
+  --ds-page-x: 32px; --ds-page-y: 28px; --ds-content-max: 1520px;
+  --ds-nav-w: 252px; --ds-top-h: 64px;
+  color-scheme: dark;
+}
+:root[data-design="e"][data-theme="dark"] {
+  --ds-bg: #0b0b0b; --ds-surface: #101010; --ds-surface-2: #151515; --ds-surface-3: #1c1c1c;
+  --ds-line: #1f1f1f; --ds-line-strong: #2c2c2c;
+  --ds-accent-soft: #1b1b1b; --ds-sel-bg: #181818;
+  --ds-nav-bg: #060606; --ds-nav-hover: #111111; --ds-nav-active-bg: #171717; --ds-nav-line: #191919;
+  --ds-top-bg: #0b0b0b;
 }
 
 /* ---------- Pont vers les variables historiques de l'application ----------
