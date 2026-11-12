@@ -1,12 +1,12 @@
 /*
- * Sélecteur de design — outil TEMPORAIRE de comparaison des cinq directions graphiques.
+ * Sélecteur de design — outil TEMPORAIRE de comparaison des quatre directions graphiques.
  *
  * Totalement isolé de l'application : aucun import, aucune dépendance, aucun appel réseau.
  * Il ne fait que poser l'attribut data-design sur <html> ; tout le reste est du CSS.
  * Son interface vit dans un Shadow DOM : ni ses styles ni ceux de l'application ne se croisent.
  *
  * Suppression après le choix définitif : voir design/README.md (retirer ce fichier, fixer
- * data-design dans index.html, supprimer les blocs de tokens des quatre autres directions).
+ * data-design dans index.html, supprimer les blocs de tokens des trois autres directions).
  */
 (() => {
   'use strict';
@@ -14,10 +14,9 @@
   /* Configuration centralisée des thèmes. `null` = interface d'origine, gardée comme point de repère. */
   const DESIGNS = [
     { id: 'a', name: 'Executive Corporate', note: 'Encre marine, filets nets, dense' },
-    { id: 'b', name: 'Modern Premium SaaS', note: 'Papier chaud, rail d’icônes, profondeur légère' },
+    { id: 'b', name: 'Graphite Premium', note: 'Nuit graphite, jour papier chaud, léger relief' },
     { id: 'c', name: 'Minimalist Luxury', note: 'Ivoire, serif, filets fins, sans boîtes' },
     { id: 'd', name: 'Contemporary Enterprise', note: 'Bandeau pétrole, navigation horizontale' },
-    { id: 'e', name: 'Graphite', note: 'Sombre, linéale fine, libellés en mono' },
   ];
   const ORIGINAL = { id: 'o', name: 'Interface d’origine', note: 'Avant refonte, pour référence' };
   const STORAGE_KEY = 'api-portal-design';
@@ -25,10 +24,11 @@
   const root = document.documentElement;
 
   /* Dans une vignette du mode comparaison, le design est imposé par le nom de la fenêtre. */
-  const forced = /^apd-preview-([a-eo])$/.exec(window.name || '');
+  const forced = /^apd-preview-([a-do])$/.exec(window.name || '');
   const isPreview = Boolean(forced);
 
-  const read = () => { try { return localStorage.getItem(STORAGE_KEY); } catch { return null; } };
+  /* 'e' : ancien identifiant de Graphite, fusionné dans B. */
+  const read = () => { try { const v = localStorage.getItem(STORAGE_KEY); return v === 'e' ? 'b' : v; } catch { return null; } };
   const write = (id) => { try { localStorage.setItem(STORAGE_KEY, id); } catch { /* stockage indisponible : choix non mémorisé */ } };
   const known = (id) => id === ORIGINAL.id || DESIGNS.some((d) => d.id === id);
   const byId = (id) => (id === ORIGINAL.id ? ORIGINAL : DESIGNS.find((d) => d.id === id));
@@ -151,7 +151,7 @@
     shadow.innerHTML = `<style>${CSS}</style>
       <div class="wrap" ${hidden ? 'hidden' : ''}>
         ${panel}
-        <button class="pill" aria-haspopup="menu" aria-expanded="${open}" title="Changer de design (Alt+1 à Alt+5)">
+        <button class="pill" aria-haspopup="menu" aria-expanded="${open}" title="Changer de design (Alt+1 à Alt+4)">
           <span class="key">${label(d)}</span><span>${esc(d.name)}</span><span class="caret">▲</span>
         </button>
       </div>${compare}`;
@@ -190,7 +190,7 @@
   function onKey(event) {
     if (event.key === 'Escape' && (open || comparing)) { open = false; comparing = false; render(); return; }
     if (!event.altKey || event.ctrlKey || event.metaKey) return;
-    const n = event.code && /^Digit([0-5])$/.exec(event.code);
+    const n = event.code && /^Digit([0-4])$/.exec(event.code);
     if (n) { event.preventDefault(); apply(n[1] === '0' ? ORIGINAL.id : DESIGNS[Number(n[1]) - 1].id, true); return; }
     if (event.code === 'KeyH') { event.preventDefault(); hidden = !hidden; open = false; render(); }
   }

@@ -1,5 +1,5 @@
 /*
- * Composants du Design System — communs aux cinq directions.
+ * Composants du Design System — communs aux quatre directions.
  * Chaque règle ne lit que des tokens (--ds-*) : changer de design ne change que les valeurs.
  * Les écarts de structure propres à une direction sont dans design-layouts.css.
  * Aucun sélecteur ne touche à la logique : uniquement de la présentation.

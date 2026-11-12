@@ -1,15 +1,15 @@
 /*
- * Design tokens des cinq directions graphiques.
+ * Design tokens des quatre directions graphiques.
  *
- * Un seul contrat de tokens (--ds-*), cinq jeux de valeurs. Les composants (design-components.css)
+ * Un seul contrat de tokens (--ds-*), quatre jeux de valeurs. Les composants (design-components.css)
  * et les layouts (design-layouts.css) ne lisent que ces tokens : aucune couleur, taille ou rayon
- * n'y est écrit en dur. Le design actif est porté par <html data-design="a|b|c|d|e">, le mode
+ * n'y est écrit en dur. Le design actif est porté par <html data-design="a|b|c|d">, le mode
  * jour/nuit existant par data-theme="light|dark" (inchangé).
  *
  * Après le choix définitif : garder le bloc du design retenu (et son bloc dark), supprimer les autres.
  */
 
-/* ---------- Échelles communes aux cinq designs ---------- */
+/* ---------- Échelles communes aux quatre designs ---------- */
 :root[data-design] {
   /* Espacement : base 4 px */
   --ds-s1: 4px; --ds-s2: 8px; --ds-s3: 12px; --ds-s4: 16px; --ds-s5: 20px; --ds-s6: 24px; --ds-s7: 32px; --ds-s8: 40px; --ds-s9: 56px;
@@ -72,50 +72,6 @@
   --ds-nav-bg: #070c16; --ds-nav-hover: #121c30; --ds-nav-active-bg: #18243c;
   --ds-top-bg: #111a2b;
   --ds-shadow-2: 0 8px 24px rgb(0 0 0 / 50%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: -12px 0 32px rgb(0 0 0 / 40%);
-}
-
-/* =====================================================================
-   B · MODERN PREMIUM SAAS — papier chaud, encre, orange de marque en accent, profondeur légère
-   ===================================================================== */
-:root[data-design="b"] {
-  --ds-font: "Instrument Sans Var", "Instrument Sans", "Segoe UI", system-ui, sans-serif;
-  --ds-font-display: var(--ds-font);
-  --ds-font-mono: "JetBrains Mono Var", "JetBrains Mono", ui-monospace, Consolas, monospace;
-  --ds-fs-base: 14px; --ds-fs-sm: 13px; --ds-fs-xs: 12px; --ds-fs-md: 15px;
-  --ds-fs-h1: 26px; --ds-fs-h2: 15px; --ds-fs-metric: 30px;
-  --ds-lh: 1.5;
-  --ds-fw-display: 600; --ds-fw-strong: 600; --ds-fw-medium: 500;
-  --ds-track-display: -0.022em;
-  --ds-label-size: 12px; --ds-label-weight: 500; --ds-label-track: 0; --ds-label-transform: none;
-
-  --ds-bg: #f6f5f2; --ds-surface: #ffffff; --ds-surface-2: #faf9f7; --ds-surface-3: #f0efeb;
-  --ds-text: #18191b; --ds-text-2: #5c6066; --ds-text-3: #84888f;
-  --ds-line: #e7e5e0; --ds-line-strong: #d2cfc8;
-  --ds-accent: #18191b; --ds-accent-hover: #2d2f33; --ds-accent-ink: #ffffff; --ds-accent-text: #b4470a; --ds-accent-soft: #fbefe6;
-  --ds-signal: #e2600f; --ds-brand: #f26a12;
-  --ds-sel-bg: #fbf3ec; --ds-sel-edge: #e2600f;
-  --ds-focus: #2a5bd7;
-  --ds-nav-bg: #fbfaf8; --ds-nav-text: #18191b; --ds-nav-muted: #6a6e75; --ds-nav-hover: #f0efeb; --ds-nav-active-bg: #18191b; --ds-nav-line: var(--ds-line);
-  --ds-top-bg: rgb(246 245 242 / 92%); --ds-top-text: var(--ds-text);
-
-  --ds-r-sm: 6px; --ds-r-md: 8px; --ds-r-lg: 12px; --ds-r-pill: 6px;
-  --ds-shadow-1: 0 1px 2px rgb(24 25 27 / 5%); --ds-shadow-2: 0 12px 32px -8px rgb(24 25 27 / 18%), 0 0 0 1px var(--ds-line); --ds-shadow-3: 0 24px 56px -16px rgb(24 25 27 / 28%), 0 0 0 1px var(--ds-line);
-  --ds-panel-border: 1px solid var(--ds-line);
-
-  --ds-ctl-h: 34px; --ds-cell-y: 10px; --ds-cell-x: 14px; --ds-panel-pad: 20px; --ds-gap: 16px;
-  --ds-page-x: 28px; --ds-page-y: 24px; --ds-content-max: 1480px;
-  --ds-nav-w: 76px; --ds-top-h: 60px;
-}
-:root[data-design="b"][data-theme="dark"] {
-  --ds-bg: #111213; --ds-surface: #191a1c; --ds-surface-2: #1f2023; --ds-surface-3: #27292c;
-  --ds-text: #eceded; --ds-text-2: #a5a8ad; --ds-text-3: #7d8187;
-  --ds-line: #2c2e31; --ds-line-strong: #3d4044;
-  --ds-accent: #eceded; --ds-accent-hover: #ffffff; --ds-accent-ink: #111213; --ds-accent-text: #ff9a55; --ds-accent-soft: #2b1e14;
-  --ds-signal: #ff8a3c; --ds-brand: #ff8a3c;
-  --ds-sel-bg: #2b2018; --ds-sel-edge: #ff8a3c; --ds-focus: #8fb0ff;
-  --ds-nav-bg: #151617; --ds-nav-text: #eceded; --ds-nav-muted: #94989e; --ds-nav-hover: #222426; --ds-nav-active-bg: #eceded;
-  --ds-top-bg: rgb(17 18 19 / 92%);
-  --ds-shadow-1: 0 1px 2px rgb(0 0 0 / 30%); --ds-shadow-2: 0 12px 32px -8px rgb(0 0 0 / 60%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: 0 24px 56px -16px rgb(0 0 0 / 70%), 0 0 0 1px var(--ds-line-strong);
 }
 
 /* =====================================================================
@@ -207,10 +163,11 @@
 }
 
 /* =====================================================================
-   E · GRAPHITE — sombre par nature : graphite, filets discrets, linéale fine, libellés en mono
-   Le mode « jour » est le graphite ; le mode « nuit » pousse vers le noir profond.
+   B · GRAPHITE PREMIUM — une seule direction, deux atmosphères
+   Nuit : graphite, filets discrets, accent ambre. Jour : papier chaud, encre, orange de marque
+   (la palette de l'ancien « Modern Premium SaaS »). Linéale fine, libellés en mono, léger relief.
    ===================================================================== */
-:root[data-design="e"] {
+:root[data-design="b"] {
   --ds-font: "Geist Var", "Geist", "Segoe UI", system-ui, sans-serif;
   --ds-font-display: var(--ds-font);
   --ds-font-mono: "Geist Mono Var", "Geist Mono", ui-monospace, Consolas, monospace;
@@ -221,6 +178,38 @@
   --ds-track-display: -0.02em;
   --ds-label-size: 12px; --ds-label-weight: 400; --ds-label-track: 0; --ds-label-transform: none;
 
+  --ds-bg: #f6f5f2; --ds-surface: #ffffff; --ds-surface-2: #faf9f7; --ds-surface-3: #f0efeb;
+  --ds-text: #18191b; --ds-text-2: #5c6066; --ds-text-3: #84888f;
+  --ds-line: #e7e5e0; --ds-line-strong: #d2cfc8;
+  --ds-accent: #18191b; --ds-accent-hover: #2d2f33; --ds-accent-ink: #ffffff; --ds-accent-text: #18191b; --ds-accent-soft: #f0efeb;
+  --ds-signal: #e2600f; --ds-brand: #f26a12;
+  --ds-sel-bg: #fbf3ec; --ds-sel-edge: #e2600f;
+  --ds-focus: #2a5bd7;
+  --ds-nav-bg: #fbfaf8; --ds-nav-text: #18191b; --ds-nav-muted: #5c6066; --ds-nav-hover: #f0efeb; --ds-nav-active-bg: #ffffff; --ds-nav-line: var(--ds-line);
+  --ds-top-bg: #f6f5f2; --ds-top-text: var(--ds-text);
+
+  --ds-r-sm: 6px; --ds-r-md: 9px; --ds-r-lg: 14px; --ds-r-pill: 6px;
+  --ds-shadow-1: 0 1px 2px rgb(24 25 27 / 5%); --ds-shadow-2: 0 12px 32px -8px rgb(24 25 27 / 18%), 0 0 0 1px var(--ds-line); --ds-shadow-3: 0 24px 56px -16px rgb(24 25 27 / 28%), 0 0 0 1px var(--ds-line);
+  --ds-panel-border: 1px solid var(--ds-line);
+
+  /* Relief : surface bombée (boutons, élément actif), surface creusée (champs), bouton principal */
+  --ds-raise-bg: linear-gradient(180deg, #ffffff 0%, #f3f1ec 100%);
+  --ds-raise-bg-hover: linear-gradient(180deg, #ffffff 0%, #ebe8e2 100%);
+  --ds-raise-edge: #d2cfc8;
+  --ds-raise-shadow: inset 0 1px 0 #ffffff, 0 1px 1px rgb(24 25 27 / 8%), 0 2px 5px -1px rgb(24 25 27 / 12%);
+  --ds-press-shadow: inset 0 1px 2px rgb(24 25 27 / 14%);
+  --ds-sunk-bg: #efede8; --ds-sunk-shadow: inset 0 1px 2px rgb(24 25 27 / 9%), 0 1px 0 #ffffff;
+  --ds-primary-bg: linear-gradient(180deg, #3a3c41 0%, #18191b 100%);
+  --ds-primary-bg-hover: linear-gradient(180deg, #47494f 0%, #232427 100%);
+  --ds-primary-shadow: inset 0 1px 0 rgb(255 255 255 / 22%), 0 1px 2px rgb(24 25 27 / 30%), 0 3px 8px -2px rgb(24 25 27 / 30%);
+  --ds-panel-bg: linear-gradient(180deg, #ffffff 0, #fdfcfa 100%);
+  --ds-panel-shadow: 0 1px 2px rgb(24 25 27 / 5%);
+
+  --ds-ctl-h: 36px; --ds-cell-y: 11px; --ds-cell-x: 14px; --ds-panel-pad: 22px; --ds-gap: 16px;
+  --ds-page-x: 32px; --ds-page-y: 28px; --ds-content-max: 1520px;
+  --ds-nav-w: 252px; --ds-top-h: 64px;
+}
+:root[data-design="b"][data-theme="dark"] {
   --ds-bg: #161616; --ds-surface: #1b1b1b; --ds-surface-2: #202020; --ds-surface-3: #272727;
   --ds-text: #ededed; --ds-text-2: #a0a0a0; --ds-text-3: #707070;
   --ds-line: #2a2a2a; --ds-line-strong: #383838;
@@ -229,25 +218,22 @@
   --ds-sel-bg: #232323; --ds-sel-edge: #f2b632;
   --ds-focus: #8ab4ff;
   --ds-nav-bg: #101010; --ds-nav-text: #ededed; --ds-nav-muted: #a0a0a0; --ds-nav-hover: #1a1a1a; --ds-nav-active-bg: #212121; --ds-nav-line: #242424;
-  --ds-top-bg: #161616; --ds-top-text: var(--ds-text);
+  --ds-top-bg: #161616;
   --ds-ok: #3ecf8e; --ds-ok-bg: #12261c; --ds-warn: #f2b632; --ds-warn-bg: #2a2212; --ds-err: #f2766e; --ds-err-bg: #2c1716;
   --ds-overlay: rgb(0 0 0 / 60%);
-
-  --ds-r-sm: 6px; --ds-r-md: 9px; --ds-r-lg: 14px; --ds-r-pill: 6px;
   --ds-shadow-1: none; --ds-shadow-2: 0 16px 40px rgb(0 0 0 / 55%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: 0 24px 64px rgb(0 0 0 / 60%), 0 0 0 1px var(--ds-line-strong);
-  --ds-panel-border: 1px solid var(--ds-line);
 
-  --ds-ctl-h: 36px; --ds-cell-y: 11px; --ds-cell-x: 14px; --ds-panel-pad: 22px; --ds-gap: 16px;
-  --ds-page-x: 32px; --ds-page-y: 28px; --ds-content-max: 1520px;
-  --ds-nav-w: 252px; --ds-top-h: 64px;
-  color-scheme: dark;
-}
-:root[data-design="e"][data-theme="dark"] {
-  --ds-bg: #0b0b0b; --ds-surface: #101010; --ds-surface-2: #151515; --ds-surface-3: #1c1c1c;
-  --ds-line: #1f1f1f; --ds-line-strong: #2c2c2c;
-  --ds-accent-soft: #1b1b1b; --ds-sel-bg: #181818;
-  --ds-nav-bg: #060606; --ds-nav-hover: #111111; --ds-nav-active-bg: #171717; --ds-nav-line: #191919;
-  --ds-top-bg: #0b0b0b;
+  --ds-raise-bg: linear-gradient(180deg, #303030 0%, #222222 100%);
+  --ds-raise-bg-hover: linear-gradient(180deg, #383838 0%, #272727 100%);
+  --ds-raise-edge: #3d3d3d;
+  --ds-raise-shadow: inset 0 1px 0 rgb(255 255 255 / 10%), 0 1px 0 rgb(0 0 0 / 55%), 0 3px 8px -2px rgb(0 0 0 / 55%);
+  --ds-press-shadow: inset 0 1px 3px rgb(0 0 0 / 60%);
+  --ds-sunk-bg: #121212; --ds-sunk-shadow: inset 0 1px 2px rgb(0 0 0 / 55%), 0 1px 0 rgb(255 255 255 / 5%);
+  --ds-primary-bg: linear-gradient(180deg, #ffffff 0%, #d4d4d4 100%);
+  --ds-primary-bg-hover: linear-gradient(180deg, #ffffff 0%, #e6e6e6 100%);
+  --ds-primary-shadow: inset 0 1px 0 #ffffff, 0 1px 0 rgb(0 0 0 / 60%), 0 4px 10px -2px rgb(0 0 0 / 60%);
+  --ds-panel-bg: linear-gradient(180deg, #1f1f1f 0, #1a1a1a 140px);
+  --ds-panel-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
 }
 
 /* ---------- Pont vers les variables historiques de l'application ----------

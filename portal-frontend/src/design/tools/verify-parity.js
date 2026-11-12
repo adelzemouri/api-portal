@@ -2,7 +2,7 @@
 const { chromium } = require('playwright');
 (async () => {
   const file = process.argv[2]; const b = await chromium.launch(); const out = {};
-  for (const d of ['o', 'a', 'b', 'c', 'd', 'e']) {
+  for (const d of ['o', 'a', 'b', 'c', 'd']) {
     const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
     await ctx.addInitScript(d => localStorage.setItem('api-portal-design', d), d);
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
@@ -44,6 +44,6 @@ const { chromium } = require('playwright');
     out[d] = JSON.stringify(r); await ctx.close();
   }
   console.log(out.o);
-  for (const d of ['a', 'b', 'c', 'd', 'e']) console.log(d, out[d] === out.o ? 'IDENTIQUE à l\'original' : 'DIFF ' + out[d]);
+  for (const d of ['a', 'b', 'c', 'd']) console.log(d, out[d] === out.o ? 'IDENTIQUE à l\'original' : 'DIFF ' + out[d]);
   await b.close();
 })();
