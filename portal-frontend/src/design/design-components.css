@@ -303,6 +303,13 @@
 :root[data-design] .mini-map-arrow { color: var(--ds-text-3); }
 :root[data-design] .drawer-journey-point { border-radius: var(--ds-r-md); font-family: var(--ds-font); font-size: var(--ds-fs-xs); }
 :root[data-design] .drawer-journey-point:hover { background: var(--ds-surface-2); }
+/* Dans le volet, l'état « déployé » est porté par le bouton et non par la pastille : sans ces règles
+   la pastille héritait des marges et du fond de la version tableau (décalée, jamais remplie). */
+:root[data-design] .drawer-journey-point .journey-step { margin: 0 0 2px; }
+:root[data-design] .drawer-journey-point.deployed .journey-step { border-color: var(--ds-signal); background: var(--ds-signal); }
+:root[data-design] .drawer-journey-point:not(:last-child)::after { height: 1.5px; background: var(--dot-off); }
+/* Le trait n'est plein qu'entre deux environnements réellement déployés */
+:root[data-design] .drawer-journey-point.deployed:has(+ .drawer-journey-point.deployed)::after { background: var(--ds-signal); }
 :root[data-design] .drawer-journey-point strong { font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-strong); color: var(--ds-text); }
 :root[data-design] .drawer-actions { gap: var(--ds-s2); }
 

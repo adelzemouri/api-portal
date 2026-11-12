@@ -26,6 +26,8 @@ design/
   design-motion.css       animations du design B (entrées, décalages, appui, popovers)
   design-motion.js        animations du design B qui demandent du script (sorties, élément actif partagé,
                           pulsation de réussite, élastique aux limites) ; isolé, sans dépendance
+  design-b-extras.js      retouches de structure du design B (« next sync » recopié dans Environment health,
+                          état « copié » des boutons) ; à reporter dans les templates Angular
   art/                    illustrations de fond des tuiles (B), une variante jour et une nuit
   design-switcher.js      sélecteur temporaire (isolé, Shadow DOM, sans dépendance)
   tools/build-preview.py  injecte le tout dans un export statique, pour démonstration
@@ -47,7 +49,7 @@ Dans `angular.json`, cible `build` (et `test`) :
 ```json
 "styles": ["src/styles.css", "src/design/design-fonts.css", "src/design/design-tokens.css",
            "src/design/design-components.css", "src/design/design-layouts.css", "src/design/design-motion.css"],
-"scripts": ["src/design/design-switcher.js", "src/design/design-motion.js"]
+"scripts": ["src/design/design-switcher.js", "src/design/design-motion.js", "src/design/design-b-extras.js"]
 ```
 
 Les sélecteurs visent les classes de la version du front dont provient l'export statique
@@ -85,5 +87,5 @@ Résultat attendu : `IDENTIQUE à l'original` pour A, B, C et D.
 2. Supprimer `design-switcher.js` et son entrée `scripts` dans `angular.json`.
 3. `design-tokens.css` : supprimer les blocs des trois autres directions.
 4. `design-layouts.css` : supprimer les sections des trois autres directions.
-5. `design-fonts.css` et `fonts/` : ne garder que les polices de la direction retenue ; supprimer `art/`, `design-motion.css` et `design-motion.js` si B n'est pas retenue.
+5. `design-fonts.css` et `fonts/` : ne garder que les polices de la direction retenue ; supprimer `art/`, `design-motion.css`, `design-motion.js` et `design-b-extras.js` si B n'est pas retenue.
 6. Facultatif : retirer le préfixe `:root[data-design]` et fusionner dans `styles.css`.

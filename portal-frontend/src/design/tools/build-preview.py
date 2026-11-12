@@ -26,7 +26,7 @@ def inline_art(css: str) -> str:
 css = inline_fonts((here / "design-fonts.css").read_text(encoding="utf-8"))
 for name in ("design-tokens.css", "design-components.css", "design-layouts.css", "design-motion.css"):
     css += "\n" + inline_art((here / name).read_text(encoding="utf-8"))
-js = "\n".join((here / n).read_text(encoding="utf-8") for n in ("design-switcher.js", "design-motion.js")).replace("</script", "<\\/script")
+js = "\n".join((here / n).read_text(encoding="utf-8") for n in ("design-switcher.js", "design-motion.js", "design-b-extras.js")).replace("</script", "<\\/script")
 
 html = src.read_text(encoding="utf-8")
 block = f'<style id="design-system">\n{css}\n</style>\n<script id="design-switcher-script">\n{js}\n</script>\n'

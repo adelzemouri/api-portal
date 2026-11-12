@@ -275,7 +275,6 @@
 :root[data-design="b"] .user-menu.open .user-menu-trigger { background: var(--ds-raise-bg-hover); border-color: var(--ds-raise-edge); color: var(--ds-text); }
 :root[data-design="b"] :is(.btn, .pager-buttons button, .env-compare-table button, .user-menu-trigger, button.copy):active { box-shadow: var(--ds-press-shadow); transform: translateY(1px); }
 :root[data-design="b"] :is(.btn, .pager-buttons button):disabled { background: var(--ds-surface-2); border-color: var(--ds-line); box-shadow: none; color: var(--ds-text-3); transform: none; }
-:root[data-design="b"] button.copy { min-height: 24px; color: var(--ds-text-2); }
 :root[data-design="b"] :is(.btn-primary, .login-submit) { color: var(--ds-accent-ink); background: var(--ds-primary-bg); border-color: transparent; box-shadow: var(--ds-primary-shadow); }
 :root[data-design="b"] :is(.btn-primary, .login-submit):hover { color: var(--ds-accent-ink); background: var(--ds-primary-bg-hover); border-color: transparent; }
 :root[data-design="b"] kbd { color: var(--ds-text-2); background: var(--ds-raise-bg); border-color: var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
@@ -288,6 +287,35 @@
 :root[data-design="b"] .splunk-metric-card, :root[data-design="b"] .splunk-metric-card:first-child { background-color: var(--ds-surface-2); box-shadow: var(--ds-panel-shadow); }
 @media (min-width: 901px) {
   :root[data-design="b"] .sidebar nav :is(a, button).active { background: var(--ds-raise-bg); border-color: var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
+}
+
+/* B — retouches de détail */
+/* Volet : même respiration au-dessus et au-dessous de chaque ligne de responsable, le filet de section ferme la liste */
+:root[data-design="b"] .owner-list > div { padding: 9px 0; }
+:root[data-design="b"] .drawer-section:has(> .owner-list:last-child) { padding-bottom: 0; }
+/* Menu utilisateur : le nom est déjà sur le bouton qui l'ouvre */
+:root[data-design="b"] .user-menu-summary { display: none; }
+/* Le champ de recherche de l'en-tête est un bouton qui ouvre la palette : il se présente comme un champ */
+:root[data-design="b"] .search-trigger { cursor: text; }
+/* Bloc Sync retiré de la navigation : l'état par environnement est dans « Environment health »,
+   où design-b-extras.js recopie le compte à rebours (le bloc reste dans le DOM, source de la recopie). */
+:root[data-design="b"] .sidebar-sync { display: none; }
+:root[data-design="b"] .sync-eta-mirror { margin-left: var(--ds-s3); padding: 2px 7px; font-family: var(--ds-font-mono); font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ds-text-2); background: var(--ds-sunk-bg); border: 1px solid var(--ds-line); border-radius: var(--ds-r-sm); }
+/* Copier : un pictogramme, le libellé reste lu par les lecteurs d'écran (aria-label) et en infobulle */
+:root[data-design="b"] button.copy, :root[data-design="b"] .row-copy-text button.copy {
+  display: inline-grid; place-items: center; flex: none; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0;
+  font-size: 0; line-height: 0; color: var(--ds-text-2); overflow: hidden;
+}
+:root[data-design="b"] button.copy::before {
+  content: ""; width: 15px; height: 15px; background: currentColor;
+  -webkit-mask: var(--ds-icon-copy) center / contain no-repeat; mask: var(--ds-icon-copy) center / contain no-repeat;
+}
+:root[data-design="b"] button.copy:hover { color: var(--ds-text); }
+:root[data-design="b"] button.copy:is([data-copied], [aria-label^="Copied"], [aria-label^="Copié"]) { color: var(--ds-ok); }
+:root[data-design="b"] button.copy:is([data-copied], [aria-label^="Copied"], [aria-label^="Copié"])::before { -webkit-mask-image: var(--ds-icon-check); mask-image: var(--ds-icon-check); }
+:root[data-design="b"] {
+  --ds-icon-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2.5'/%3E%3Cpath d='M5.5 15H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 4h8a1.5 1.5 0 0 1 1.5 1.5V6'/%3E%3C/svg%3E");
+  --ds-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
 }
 
 /* B — illustrations de fond de certaines tuiles (générées par tools/build-art.py, une variante par atmosphère).
