@@ -27,7 +27,7 @@ design/
   design-motion.js        animations du design B qui demandent du script (sorties, élément actif partagé,
                           pulsation de réussite, élastique aux limites) ; isolé, sans dépendance
   design-b-extras.js      retouches de structure du design B (« next sync » recopié dans Environment health,
-                          état « copié » des boutons) ; à reporter dans les templates Angular
+                          état « copié » des boutons, titres de page factuels, guide d'aide assagi) ; à reporter dans les templates Angular
   art/                    illustrations de fond des tuiles (B), une variante jour et une nuit
   design-switcher.js      sélecteur temporaire (isolé, Shadow DOM, sans dépendance)
   tools/build-preview.py  injecte le tout dans un export statique, pour démonstration
