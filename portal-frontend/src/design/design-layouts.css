@@ -306,8 +306,10 @@
   display: inline-grid; place-items: center; flex: none; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0;
   font-size: 0; line-height: 0; color: var(--ds-text-2); overflow: hidden;
 }
+:root[data-design="b"] button.copy { position: relative; }
+/* Centré en absolu : le libellé masqué reste un élément de grille et décalait le pictogramme */
 :root[data-design="b"] button.copy::before {
-  content: ""; width: 15px; height: 15px; background: currentColor;
+  content: ""; position: absolute; inset: 0; margin: auto; width: 15px; height: 15px; background: currentColor;
   -webkit-mask: var(--ds-icon-copy) center / contain no-repeat; mask: var(--ds-icon-copy) center / contain no-repeat;
 }
 :root[data-design="b"] button.copy:hover { color: var(--ds-text); }
@@ -338,6 +340,18 @@
   color: var(--ds-text-2); background: var(--ds-sunk-bg); border: 1px solid var(--ds-line); border-radius: var(--ds-r-sm);
 }
 
+/* Connection details : trois colonnes communes (URL, nature de la gateway, copie) pour que toutes les URL
+   partent du même point et que les boutons de copie soient alignés */
+:root[data-design="b"] dl.conn dd:has(> .url), :root[data-design="b"] dl.conn .conn-line {
+  display: grid; grid-template-columns: minmax(250px, max-content) 76px 28px; align-items: center; column-gap: var(--ds-s3); margin: 0;
+}
+:root[data-design="b"] dl.conn .conn-line + .conn-line { margin-top: var(--ds-s2); }
+:root[data-design="b"] dl.conn :is(dd:has(> .url), .conn-line) > .url { grid-column: 1; grid-row: 1; min-width: 0; margin: 0; padding: 0; }
+:root[data-design="b"] dl.conn .conn-line > .gw-name { grid-column: 2; grid-row: 1; margin: 0; padding: 0; width: auto; min-width: 0; }
+:root[data-design="b"] dl.conn :is(dd:has(> .url), .conn-line) > app-copy-button { grid-column: 3; grid-row: 1; display: grid; }
+:root[data-design="b"] dl.conn app-copy-button button.copy { margin: 0; }
+:root[data-design="b"] dl.conn .conn-hint { margin-top: var(--ds-s3); }
+
 /* B — illustrations de fond de certaines tuiles (générées par tools/build-art.py, une variante par atmosphère).
    Décor pur : aucune information n'y figure. Affichées seulement quand la tuile a la place (≥ 1280 px).
    Les quatre cartes de signaux sont ciblées par leur rang : si leur ordre change, réaffecter ici. */
@@ -350,16 +364,16 @@
   --ds-art-auth: url("art/auth-dark.svg"); --ds-art-deploy: url("art/deploy-dark.svg"); --ds-art-connect: url("art/connect-dark.svg");
 }
 @media (min-width: 1280px) {
-  :root[data-design="b"] .splunk-metric-card { background-repeat: no-repeat; background-position: right -34px top -16px; background-size: 168px auto; }
+  :root[data-design="b"] .splunk-metric-card { background-repeat: no-repeat; background-position: right -30px top -22px; background-size: 132px auto; }
   :root[data-design="b"] .splunk-metric-card:nth-child(1) { background-image: var(--ds-art-errors); }
   :root[data-design="b"] .splunk-metric-card:nth-child(2) { background-image: var(--ds-art-latency); }
   :root[data-design="b"] .splunk-metric-card:nth-child(3) { background-image: var(--ds-art-calls); }
   :root[data-design="b"] .splunk-metric-card:nth-child(4) { background-image: var(--ds-art-auth); }
   /* L'évolution passe à côté du libellé pour laisser le coin à l'illustration */
   :root[data-design="b"] .splunk-metric-top { justify-content: flex-start; gap: var(--ds-s2); }
-  :root[data-design="b"] :is(.callout, .split .callout) { background: var(--ds-art-deploy) right -30px bottom -34px / 230px auto no-repeat, var(--ds-panel-bg); }
+  :root[data-design="b"] :is(.callout, .split .callout) { background: var(--ds-art-deploy) right -26px bottom -30px / 170px auto no-repeat, var(--ds-panel-bg); }
   :root[data-design="b"] .callout :is(p, h3) { max-width: 62%; }
-  :root[data-design="b"] .split > .panel { background: var(--ds-art-connect) right -28px top -22px / 210px auto no-repeat, var(--ds-panel-bg); }
+  :root[data-design="b"] .split > .panel { background: var(--ds-art-connect) right -26px top -24px / 160px auto no-repeat, var(--ds-panel-bg); }
 }
 
 /* ---------- Petits écrans (≤ 900 px) : même comportement pour les quatre ---------- */

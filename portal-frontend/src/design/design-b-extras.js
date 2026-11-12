@@ -74,11 +74,17 @@
 
     /* Scène : une figure posée sur la surface de l'app, plus de bloc noir */
     .stage { max-width: 780px; border-radius: 9px; color: var(--st-fg); background: var(--st-bg); box-shadow: 0 0 0 1px var(--st-ring) inset; }
-    .stage svg { min-width: 560px; }
+    /* Pas de largeur minimale : le schéma se réduit avec sa colonne au lieu de faire défiler */
+    .stage svg { min-width: 0 !important; }
+    .stage-scroll { overflow: hidden; }
     .stage-bar { padding: 12px 14px 0; gap: 10px; }
     .stage-bar .seg { position: relative; left: auto; transform: none; }
     .stat { flex: 1 1 220px; }
     .stat span { max-width: 34ch; }
+    /* « 1 » suivi de « one … » : le chiffre répète le premier mot, on ne garde que la phrase */
+    .stage-bar:has(#c1on[aria-pressed="true"]) .stat b { display: none; }
+    .stage-bar:has(#c1on[aria-pressed="true"]) .stat span { max-width: 44ch; font-size: 13px; color: var(--st-fg); }
+    .stage-bar:has(#c1on[aria-pressed="true"]) .stat span::first-letter { text-transform: uppercase; }
     .motion-host { padding: 12px 14px 0; }
     .chips-legend { padding: 0 14px 12px; }
     .chips-legend span { font-size: 12px; }
@@ -104,7 +110,7 @@
     .scen button:hover { background: color-mix(in srgb, var(--st-fg) 5%, var(--st-node)); }
     .scen button[aria-pressed="true"] { background: var(--st-node); box-shadow: 0 0 0 1px var(--st-fg) inset; }
     .scen .code { background: color-mix(in srgb, var(--st-fg) 8%, transparent); }
-    .console { height: 170px; border-radius: 7px; font-size: 12px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }
+    .console { height: auto; min-height: 170px; overflow: visible; border-radius: 7px; font-size: 12px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }
     .console::before { content: none; }
     .console .out { color: var(--st-fg); } .console .in { color: var(--st-muted); } .console .note { color: var(--st-or); }
     .verdict, .card-app { min-height: 0; border-radius: 7px; background: var(--st-node); box-shadow: 0 0 0 1px var(--st-ring) inset; }

@@ -4,7 +4,7 @@
 Usage : python3 tools/build-art.py        (écrit art/<nom>-<light|dark>.svg)
 
 Dessins originaux, purement vectoriels, sans texte ni police : des « objets » posés en biais
-(plaque à coins ronds, tranche, reflet) portant un pictogramme en rapport avec la tuile.
+(plaque à coins ronds, tournée mais jamais cisaillée, tranche, reflet) portant un pictogramme en rapport avec la tuile.
 Une variante par atmosphère, car une image de fond ne peut pas lire les tokens CSS.
 """
 import pathlib
@@ -13,10 +13,10 @@ OUT = pathlib.Path(__file__).resolve().parent.parent / "art"
 
 PALETTES = {
     "dark": dict(top="#3b3b3b", bottom="#1d1d1d", side="#0c0c0c", edge="#565656", back_top="#2a2a2a", back_bottom="#171717",
-                 ink="#8f8f8f", ink_soft="#4a4a4a", well="#151515", shadow="#000000", shadow_op="0.55",
+                 ink="#8f8f8f", ink_soft="#4a4a4a", well="#151515", shadow="#000000", shadow_op="0.4", fade="0.5",
                  accent="#f2b632", ok="#3ecf8e", err="#f2766e", gloss="0.10"),
     "light": dict(top="#ffffff", bottom="#ece9e3", side="#cfcbc2", edge="#d2cfc8", back_top="#f6f4f0", back_bottom="#e4e0d8",
-                  ink="#7a7d83", ink_soft="#c9c5bc", well="#f0eee9", shadow="#18191b", shadow_op="0.16",
+                  ink="#7a7d83", ink_soft="#c9c5bc", well="#f0eee9", shadow="#18191b", shadow_op="0.1", fade="0.6",
                   accent="#e2600f", ok="#1a8f5c", err="#c8372f", gloss="0.9"),
 }
 
@@ -91,8 +91,12 @@ def svg(p, glyph, back_glyph):
             f'<linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{bt}"/><stop offset="1" stop-color="{bb}"/></linearGradient>'
             f'<filter id="s" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="{p["shadow"]}" flood-opacity="{p["shadow_op"]}"/></filter>'
             f'</defs>'
-            f'<g transform="translate(84 18) rotate(9) skewX(-6)" filter="url(#s)" opacity="0.9">{back}</g>'
-            f'<g transform="translate(34 66) rotate(-11) skewX(-7)" filter="url(#s)">{front}</g>'
+            # Rotation seule, sans cisaillement : chaque coin reste à angle droit.
+            # Opacité d'ensemble réduite : l'illustration reste un fond, derrière le contenu.
+            f'<g opacity="{p["fade"]}">'
+            f'<g transform="translate(78 22) rotate(8)" filter="url(#s)" opacity="0.85">{back}</g>'
+            f'<g transform="translate(30 62) rotate(-9)" filter="url(#s)">{front}</g>'
+            f'</g>'
             f'</svg>\n')
 
 
