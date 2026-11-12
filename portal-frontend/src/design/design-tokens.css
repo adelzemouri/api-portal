@@ -1,0 +1,225 @@
+/*
+ * Design tokens des quatre directions graphiques.
+ *
+ * Un seul contrat de tokens (--ds-*), quatre jeux de valeurs. Les composants (design-components.css)
+ * et les layouts (design-layouts.css) ne lisent que ces tokens : aucune couleur, taille ou rayon
+ * n'y est écrit en dur. Le design actif est porté par <html data-design="a|b|c|d">, le mode
+ * jour/nuit existant par data-theme="light|dark" (inchangé).
+ *
+ * Après le choix définitif : garder le bloc du design retenu (et son bloc dark), supprimer les autres.
+ */
+
+/* ---------- Échelles communes aux quatre designs ---------- */
+:root[data-design] {
+  /* Espacement : base 4 px */
+  --ds-s1: 4px; --ds-s2: 8px; --ds-s3: 12px; --ds-s4: 16px; --ds-s5: 20px; --ds-s6: 24px; --ds-s7: 32px; --ds-s8: 40px; --ds-s9: 56px;
+  /* Breakpoints (rappel, les media queries ne lisent pas les variables) : 720 / 900 / 1200 / 1440 */
+  --ds-ease: cubic-bezier(0.2, 0, 0, 1);
+  --ds-dur: 120ms;
+  --ds-ok: #1a6b47; --ds-ok-bg: #e8f2ec;
+  --ds-warn: #8a5a00; --ds-warn-bg: #fbf1d9;
+  --ds-err: #a3261f; --ds-err-bg: #fbebe9;
+  --ds-overlay: rgb(15 20 30 / 32%);
+  color-scheme: light;
+}
+:root[data-design][data-theme="dark"] {
+  --ds-ok: #6fcf9a; --ds-ok-bg: #12261c;
+  --ds-warn: #e9b860; --ds-warn-bg: #2b2313;
+  --ds-err: #f0918a; --ds-err-bg: #311a18;
+  --ds-overlay: rgb(0 0 0 / 55%);
+  color-scheme: dark;
+}
+
+/* =====================================================================
+   A · EXECUTIVE CORPORATE — encre marine, laiton, filets nets, densité élevée
+   ===================================================================== */
+:root[data-design="a"] {
+  --ds-font: "IBM Plex Sans Var", "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --ds-font-display: var(--ds-font);
+  --ds-font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --ds-fs-base: 13px; --ds-fs-sm: 12px; --ds-fs-xs: 11px; --ds-fs-md: 14px;
+  --ds-fs-h1: 22px; --ds-fs-h2: 14px; --ds-fs-metric: 26px;
+  --ds-lh: 1.45;
+  --ds-fw-display: 600; --ds-fw-strong: 600; --ds-fw-medium: 500;
+  --ds-track-display: -0.01em;
+  --ds-label-size: 11px; --ds-label-weight: 600; --ds-label-track: 0.06em; --ds-label-transform: uppercase;
+
+  --ds-bg: #f1f2f4; --ds-surface: #ffffff; --ds-surface-2: #f6f7f8; --ds-surface-3: #eceef1;
+  --ds-text: #101828; --ds-text-2: #4a5567; --ds-text-3: #717b8c;
+  --ds-line: #dcdfe4; --ds-line-strong: #b9bfc9;
+  --ds-accent: #1c3d73; --ds-accent-hover: #15305d; --ds-accent-ink: #ffffff; --ds-accent-text: #1c3d73; --ds-accent-soft: #e9eef6;
+  --ds-signal: #a6691c; --ds-brand: #c98a2e;
+  --ds-sel-bg: #eef2f8; --ds-sel-edge: #1c3d73;
+  --ds-focus: #2f6fdb;
+  --ds-nav-bg: #0f1a30; --ds-nav-text: #ffffff; --ds-nav-muted: #a9b3c6; --ds-nav-hover: #1a2742; --ds-nav-active-bg: #1f2e4d; --ds-nav-line: rgb(255 255 255 / 10%);
+  --ds-top-bg: #ffffff; --ds-top-text: var(--ds-text);
+
+  --ds-r-sm: 2px; --ds-r-md: 3px; --ds-r-lg: 4px; --ds-r-pill: 2px;
+  --ds-shadow-1: none; --ds-shadow-2: 0 6px 20px rgb(16 24 40 / 14%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: -12px 0 32px rgb(16 24 40 / 10%);
+  --ds-panel-border: 1px solid var(--ds-line);
+
+  --ds-ctl-h: 30px; --ds-cell-y: 7px; --ds-cell-x: 12px; --ds-panel-pad: 16px; --ds-gap: 12px;
+  --ds-page-x: 24px; --ds-page-y: 20px; --ds-content-max: none;
+  --ds-nav-w: 224px; --ds-top-h: 52px;
+}
+:root[data-design="a"][data-theme="dark"] {
+  --ds-bg: #0b111d; --ds-surface: #111a2b; --ds-surface-2: #162034; --ds-surface-3: #1c2840;
+  --ds-text: #e8ecf3; --ds-text-2: #a8b2c4; --ds-text-3: #7f8a9e;
+  --ds-line: #24304a; --ds-line-strong: #36445f;
+  --ds-accent: #8fb0ea; --ds-accent-hover: #a9c3f0; --ds-accent-ink: #0b111d; --ds-accent-text: #9dbaee; --ds-accent-soft: #1a2946;
+  --ds-signal: #d9a04e; --ds-brand: #d9a04e;
+  --ds-sel-bg: #1a2946; --ds-sel-edge: #8fb0ea; --ds-focus: #8fb0ea;
+  --ds-nav-bg: #070c16; --ds-nav-hover: #121c30; --ds-nav-active-bg: #18243c;
+  --ds-top-bg: #111a2b;
+  --ds-shadow-2: 0 8px 24px rgb(0 0 0 / 50%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: -12px 0 32px rgb(0 0 0 / 40%);
+}
+
+/* =====================================================================
+   B · MODERN PREMIUM SAAS — papier chaud, encre, orange de marque en accent, profondeur légère
+   ===================================================================== */
+:root[data-design="b"] {
+  --ds-font: "Instrument Sans Var", "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --ds-font-display: var(--ds-font);
+  --ds-font-mono: "JetBrains Mono Var", "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --ds-fs-base: 14px; --ds-fs-sm: 13px; --ds-fs-xs: 12px; --ds-fs-md: 15px;
+  --ds-fs-h1: 26px; --ds-fs-h2: 15px; --ds-fs-metric: 30px;
+  --ds-lh: 1.5;
+  --ds-fw-display: 600; --ds-fw-strong: 600; --ds-fw-medium: 500;
+  --ds-track-display: -0.022em;
+  --ds-label-size: 12px; --ds-label-weight: 500; --ds-label-track: 0; --ds-label-transform: none;
+
+  --ds-bg: #f6f5f2; --ds-surface: #ffffff; --ds-surface-2: #faf9f7; --ds-surface-3: #f0efeb;
+  --ds-text: #18191b; --ds-text-2: #5c6066; --ds-text-3: #84888f;
+  --ds-line: #e7e5e0; --ds-line-strong: #d2cfc8;
+  --ds-accent: #18191b; --ds-accent-hover: #2d2f33; --ds-accent-ink: #ffffff; --ds-accent-text: #b4470a; --ds-accent-soft: #fbefe6;
+  --ds-signal: #e2600f; --ds-brand: #f26a12;
+  --ds-sel-bg: #fbf3ec; --ds-sel-edge: #e2600f;
+  --ds-focus: #2a5bd7;
+  --ds-nav-bg: #fbfaf8; --ds-nav-text: #18191b; --ds-nav-muted: #6a6e75; --ds-nav-hover: #f0efeb; --ds-nav-active-bg: #18191b; --ds-nav-line: var(--ds-line);
+  --ds-top-bg: rgb(246 245 242 / 92%); --ds-top-text: var(--ds-text);
+
+  --ds-r-sm: 6px; --ds-r-md: 8px; --ds-r-lg: 12px; --ds-r-pill: 6px;
+  --ds-shadow-1: 0 1px 2px rgb(24 25 27 / 5%); --ds-shadow-2: 0 12px 32px -8px rgb(24 25 27 / 18%), 0 0 0 1px var(--ds-line); --ds-shadow-3: 0 24px 56px -16px rgb(24 25 27 / 28%), 0 0 0 1px var(--ds-line);
+  --ds-panel-border: 1px solid var(--ds-line);
+
+  --ds-ctl-h: 34px; --ds-cell-y: 10px; --ds-cell-x: 14px; --ds-panel-pad: 20px; --ds-gap: 16px;
+  --ds-page-x: 28px; --ds-page-y: 24px; --ds-content-max: 1480px;
+  --ds-nav-w: 76px; --ds-top-h: 60px;
+}
+:root[data-design="b"][data-theme="dark"] {
+  --ds-bg: #111213; --ds-surface: #191a1c; --ds-surface-2: #1f2023; --ds-surface-3: #27292c;
+  --ds-text: #eceded; --ds-text-2: #a5a8ad; --ds-text-3: #7d8187;
+  --ds-line: #2c2e31; --ds-line-strong: #3d4044;
+  --ds-accent: #eceded; --ds-accent-hover: #ffffff; --ds-accent-ink: #111213; --ds-accent-text: #ff9a55; --ds-accent-soft: #2b1e14;
+  --ds-signal: #ff8a3c; --ds-brand: #ff8a3c;
+  --ds-sel-bg: #2b2018; --ds-sel-edge: #ff8a3c; --ds-focus: #8fb0ff;
+  --ds-nav-bg: #151617; --ds-nav-text: #eceded; --ds-nav-muted: #94989e; --ds-nav-hover: #222426; --ds-nav-active-bg: #eceded;
+  --ds-top-bg: rgb(17 18 19 / 92%);
+  --ds-shadow-1: 0 1px 2px rgb(0 0 0 / 30%); --ds-shadow-2: 0 12px 32px -8px rgb(0 0 0 / 60%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: 0 24px 56px -16px rgb(0 0 0 / 70%), 0 0 0 1px var(--ds-line-strong);
+}
+
+/* =====================================================================
+   C · MINIMALIST LUXURY — ivoire, serif de titrage, vert bouteille, filets fins, aucun relief
+   ===================================================================== */
+:root[data-design="c"] {
+  --ds-font: "Albert Sans Var", "Albert Sans", "Segoe UI", system-ui, sans-serif;
+  --ds-font-display: "Newsreader Var", "Newsreader", "Iowan Old Style", Georgia, serif;
+  --ds-font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --ds-fs-base: 14px; --ds-fs-sm: 13px; --ds-fs-xs: 12px; --ds-fs-md: 15px;
+  --ds-fs-h1: 34px; --ds-fs-h2: 20px; --ds-fs-metric: 36px;
+  --ds-lh: 1.55;
+  --ds-fw-display: 400; --ds-fw-strong: 500; --ds-fw-medium: 500;
+  --ds-track-display: -0.012em;
+  --ds-label-size: 11px; --ds-label-weight: 500; --ds-label-track: 0.12em; --ds-label-transform: uppercase;
+
+  --ds-bg: #faf8f3; --ds-surface: #faf8f3; --ds-surface-2: #f4f1ea; --ds-surface-3: #ece8df;
+  --ds-text: #1d1b18; --ds-text-2: #6a645b; --ds-text-3: #8d877d;
+  --ds-line: #e3ded3; --ds-line-strong: #1d1b18;
+  --ds-accent: #1f4435; --ds-accent-hover: #17352a; --ds-accent-ink: #faf8f3; --ds-accent-text: #1f4435; --ds-accent-soft: #e9efe9;
+  --ds-signal: #1f4435; --ds-brand: #a5823f;
+  --ds-sel-bg: #f1eee6; --ds-sel-edge: #1d1b18;
+  --ds-focus: #1f4435;
+  --ds-nav-bg: #faf8f3; --ds-nav-text: #1d1b18; --ds-nav-muted: #7a746a; --ds-nav-hover: transparent; --ds-nav-active-bg: transparent; --ds-nav-line: var(--ds-line);
+  --ds-top-bg: #faf8f3; --ds-top-text: var(--ds-text);
+
+  --ds-r-sm: 0px; --ds-r-md: 0px; --ds-r-lg: 0px; --ds-r-pill: 0px;
+  --ds-shadow-1: none; --ds-shadow-2: 0 16px 40px rgb(29 27 24 / 12%), 0 0 0 1px var(--ds-text); --ds-shadow-3: none;
+  --ds-panel-border: 0;
+
+  --ds-ctl-h: 36px; --ds-cell-y: 13px; --ds-cell-x: 14px; --ds-panel-pad: 0px; --ds-gap: 40px;
+  --ds-page-x: 56px; --ds-page-y: 40px; --ds-content-max: 1240px;
+  --ds-nav-w: 208px; --ds-top-h: 64px;
+}
+:root[data-design="c"][data-theme="dark"] {
+  --ds-bg: #151412; --ds-surface: #151412; --ds-surface-2: #1c1b18; --ds-surface-3: #25231f;
+  --ds-text: #ece8df; --ds-text-2: #a39d91; --ds-text-3: #7d776c;
+  --ds-line: #2e2b26; --ds-line-strong: #ece8df;
+  --ds-accent: #a9cdb9; --ds-accent-hover: #c0dccb; --ds-accent-ink: #151412; --ds-accent-text: #a9cdb9; --ds-accent-soft: #1d2a23;
+  --ds-signal: #a9cdb9; --ds-brand: #c9a560;
+  --ds-sel-bg: #201e1a; --ds-sel-edge: #ece8df; --ds-focus: #a9cdb9;
+  --ds-nav-bg: #151412; --ds-nav-text: #ece8df; --ds-nav-muted: #948e82;
+  --ds-top-bg: #151412;
+  --ds-shadow-2: 0 16px 40px rgb(0 0 0 / 60%), 0 0 0 1px var(--ds-text);
+}
+
+/* =====================================================================
+   D · CONTEMPORARY ENTERPRISE — bandeau pétrole, sable, safran ; navigation horizontale
+   ===================================================================== */
+:root[data-design="d"] {
+  --ds-font: "Archivo Var", "Archivo", "Segoe UI", system-ui, sans-serif;
+  --ds-font-display: var(--ds-font);
+  --ds-font-mono: "JetBrains Mono Var", "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --ds-fs-base: 13.5px; --ds-fs-sm: 12.5px; --ds-fs-xs: 11.5px; --ds-fs-md: 14.5px;
+  --ds-fs-h1: 28px; --ds-fs-h2: 15px; --ds-fs-metric: 32px;
+  --ds-lh: 1.45;
+  --ds-fw-display: 650; --ds-fw-strong: 600; --ds-fw-medium: 500;
+  --ds-track-display: -0.015em;
+  --ds-label-size: 11px; --ds-label-weight: 600; --ds-label-track: 0.05em; --ds-label-transform: uppercase;
+
+  --ds-bg: #f2efe8; --ds-surface: #fffefb; --ds-surface-2: #f8f5ee; --ds-surface-3: #ece7dc;
+  --ds-text: #10292b; --ds-text-2: #4f6163; --ds-text-3: #758486;
+  --ds-line: #ddd7c9; --ds-line-strong: #b8b3a5;
+  --ds-accent: #0d4a4d; --ds-accent-hover: #093a3c; --ds-accent-ink: #ffffff; --ds-accent-text: #0d5558; --ds-accent-soft: #e2eceb;
+  --ds-signal: #0f6b6e; --ds-brand: #eaa63a;
+  --ds-sel-bg: #e9f0ee; --ds-sel-edge: #eaa63a;
+  --ds-focus: #0f6b6e;
+  --ds-nav-bg: #0b3336; --ds-nav-text: #ffffff; --ds-nav-muted: #a9c3c3; --ds-nav-hover: #124448; --ds-nav-active-bg: #164f53; --ds-nav-line: rgb(255 255 255 / 12%);
+  --ds-top-bg: #fffefb; --ds-top-text: var(--ds-text);
+
+  --ds-r-sm: 3px; --ds-r-md: 5px; --ds-r-lg: 6px; --ds-r-pill: 3px;
+  --ds-shadow-1: 0 1px 0 rgb(16 41 43 / 4%); --ds-shadow-2: 0 10px 28px rgb(16 41 43 / 16%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: -16px 0 40px rgb(16 41 43 / 14%);
+  --ds-panel-border: 1px solid var(--ds-line);
+
+  --ds-ctl-h: 32px; --ds-cell-y: 8px; --ds-cell-x: 12px; --ds-panel-pad: 18px; --ds-gap: 14px;
+  --ds-page-x: 32px; --ds-page-y: 22px; --ds-content-max: 1560px;
+  --ds-nav-w: 0px; --ds-nav-h: 52px; --ds-top-h: 50px;
+}
+:root[data-design="d"][data-theme="dark"] {
+  --ds-bg: #0a1516; --ds-surface: #0f1e20; --ds-surface-2: #14272a; --ds-surface-3: #1b3336;
+  --ds-text: #e6eeed; --ds-text-2: #a2b5b5; --ds-text-3: #7b8f90;
+  --ds-line: #213739; --ds-line-strong: #33504f;
+  --ds-accent: #8fd0c8; --ds-accent-hover: #abdfd8; --ds-accent-ink: #0a1516; --ds-accent-text: #8fd0c8; --ds-accent-soft: #15302f;
+  --ds-signal: #6cc2bb; --ds-brand: #f0b450;
+  --ds-sel-bg: #15302f; --ds-sel-edge: #f0b450; --ds-focus: #8fd0c8;
+  --ds-nav-bg: #061011; --ds-nav-hover: #0f2325; --ds-nav-active-bg: #153235;
+  --ds-top-bg: #0f1e20;
+  --ds-shadow-2: 0 10px 28px rgb(0 0 0 / 55%), 0 0 0 1px var(--ds-line-strong); --ds-shadow-3: -16px 0 40px rgb(0 0 0 / 45%);
+}
+
+/* ---------- Pont vers les variables historiques de l'application ----------
+   Les styles existants lisent --bg, --surface, --accent… On les branche sur les tokens pour que
+   tout écran non encore repris par design-components.css reste dans la palette du design actif. */
+:root[data-design] {
+  --bg: var(--ds-bg); --surface: var(--ds-surface); --surface-2: var(--ds-surface-2); --panel: var(--ds-surface);
+  --text: var(--ds-text); --muted: var(--ds-text-2); --border: var(--ds-line);
+  --brand: var(--ds-brand); --data: var(--ds-signal); --accent: var(--ds-accent-text); --accent-soft: var(--ds-accent-soft); --accent-contrast: var(--ds-accent-ink);
+  --ok: var(--ds-ok); --ok-bg: var(--ds-ok-bg); --warn: var(--ds-warn); --warn-bg: var(--ds-warn-bg); --err: var(--ds-err); --err-bg: var(--ds-err-bg); --danger: var(--ds-err);
+  --neutral-bg: var(--ds-surface-3); --sel-bg: var(--ds-sel-bg);
+  --side-bg: var(--ds-nav-bg); --side-text: var(--ds-nav-text); --side-muted: var(--ds-nav-muted); --rail-hover: var(--ds-nav-hover);
+  --drawer-bg: var(--ds-surface); --drawer-edge: var(--ds-sel-edge); --focus: var(--ds-focus);
+  --dot-off: var(--ds-line-strong); --overlay-backdrop: var(--ds-overlay);
+  --radius: var(--ds-r-md); --panel-radius: var(--ds-r-lg);
+  --font: var(--ds-font); --title-font: var(--ds-font-display); --mono: var(--ds-font-mono); --font-mono: var(--ds-font-mono); --mono-font: var(--ds-font-mono); --narrow: var(--ds-font); --display: var(--ds-font-display);
+}
+:root[data-design="c"] { --dot-off: #cfc9bc; }
+:root[data-design="c"][data-theme="dark"] { --dot-off: #4a463f; }

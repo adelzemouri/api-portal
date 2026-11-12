@@ -1,0 +1,419 @@
+/*
+ * Composants du Design System — communs aux quatre directions.
+ * Chaque règle ne lit que des tokens (--ds-*) : changer de design ne change que les valeurs.
+ * Les écarts de structure propres à une direction sont dans design-layouts.css.
+ * Aucun sélecteur ne touche à la logique : uniquement de la présentation.
+ */
+
+/* ---------- 1. Base typographique ---------- */
+:root[data-design] body {
+  background: var(--ds-bg); color: var(--ds-text);
+  font-family: var(--ds-font); font-size: var(--ds-fs-base); line-height: var(--ds-lh); letter-spacing: 0;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-design] :is(h1, h2, h3, h4) { margin: 0; font-family: var(--ds-font-display); color: var(--ds-text); text-wrap: balance; }
+:root[data-design] a { color: var(--ds-accent-text); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+:root[data-design] a:hover { text-decoration-thickness: 2px; }
+:root[data-design] :is(.mono, .url, code, kbd, time, .client-id, .env-compare-note, .chip-count) { font-family: var(--ds-font-mono); letter-spacing: 0; }
+:root[data-design] .muted { color: var(--ds-text-2); }
+:root[data-design] ::selection { background: color-mix(in srgb, var(--ds-accent) 22%, transparent); }
+
+/* Focus clavier : un seul anneau, partout */
+:root[data-design] :is(a, button, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--ds-focus); outline-offset: 2px; box-shadow: none;
+}
+
+/* Libellés de structure (surtitres, en-têtes de colonne, légendes) : un seul style */
+:root[data-design] :is(.eyebrow, .page-kicker, .tile-kicker, .filter-label, .filter-chip-group-label, .menu-label,
+  .splunk-metric-label, .team-clock-city, .palette-group-title, .gw-name, .drawer-section h4,
+  table.list > thead th, .env-compare-table thead th, .owner-list dt, .mini-map-node > span) {
+  font-family: var(--ds-font); font-size: var(--ds-label-size); font-weight: var(--ds-label-weight);
+  letter-spacing: var(--ds-label-track); text-transform: var(--ds-label-transform);
+  color: var(--ds-text-2); line-height: 1.3;
+}
+
+/* ---------- 2. En-tête de page ---------- */
+:root[data-design] .page-head { display: block; margin: 0 0 var(--ds-s5); gap: 0; }
+:root[data-design] :is(.eyebrow, .page-kicker) { margin: 0 0 var(--ds-s1); }
+:root[data-design] :is(.page-head h2, .api-head h2) {
+  font-size: var(--ds-fs-h1); font-weight: var(--ds-fw-display); letter-spacing: var(--ds-track-display); line-height: 1.2;
+}
+:root[data-design] .lede { margin: var(--ds-s1) 0 0; max-width: 72ch; color: var(--ds-text-2); font-size: var(--ds-fs-base); line-height: var(--ds-lh); }
+
+/* ---------- 3. Surfaces ---------- */
+:root[data-design] :is(.panel, .chart, .callout, .kpi, .focus-list, .latest-deployments,
+  .home-insights > .panel, .split .panel, .split .callout, .env-compare-panel) {
+  margin-bottom: var(--ds-gap); padding: var(--ds-panel-pad);
+  background: var(--ds-surface); border: var(--ds-panel-border); border-radius: var(--ds-r-lg); box-shadow: var(--ds-shadow-1);
+  overflow: visible;
+}
+:root[data-design] .section { margin-bottom: var(--ds-gap); }
+:root[data-design] :is(.home-insights, .split) { gap: var(--ds-gap); }
+:root[data-design] :is(.home-insights, .split) > :is(.panel, .callout) { margin-bottom: 0; }
+:root[data-design] :is(.section-head, .tile-head) { margin: 0 0 var(--ds-s3); gap: 2px; }
+:root[data-design] :is(.tile-kicker) { margin: 0; }
+:root[data-design] :is(.section-title, .tile-head .section-title, .callout-stack h3, .callout h3) {
+  font-size: var(--ds-fs-h2); font-weight: var(--ds-fw-display); letter-spacing: var(--ds-track-display); line-height: 1.3; color: var(--ds-text);
+}
+:root[data-design] .section-title .muted { font-weight: 400; }
+
+/* Bandeau de compteurs (accueil) : une ligne de faits, pas une carte */
+:root[data-design] .catalog-strip {
+  display: flex; gap: var(--ds-s6); margin: 0 0 var(--ds-s5); padding: var(--ds-s2) 0;
+  background: none; border-radius: 0; box-shadow: none;
+  border-top: 1px solid var(--ds-line); border-bottom: 1px solid var(--ds-line);
+  color: var(--ds-text-2); font-size: var(--ds-fs-base);
+}
+:root[data-design] .catalog-strip strong { margin-right: var(--ds-s1); color: var(--ds-text); font-family: var(--ds-font); font-weight: var(--ds-fw-strong); }
+:root[data-design] .catalog-strip a { color: inherit; text-decoration: none; }
+:root[data-design] .catalog-strip a:hover { color: var(--ds-text); text-decoration: underline; }
+
+/* ---------- 4. Boutons ---------- */
+:root[data-design] :is(.btn, .pager-buttons button, .env-compare-table button) {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--ds-s2);
+  min-height: var(--ds-ctl-h); padding: 0 var(--ds-s3);
+  font-family: var(--ds-font); font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-medium); line-height: 1; letter-spacing: 0;
+  color: var(--ds-text); background: var(--ds-surface); border: 1px solid var(--ds-line-strong); border-radius: var(--ds-r-md);
+  box-shadow: none; text-decoration: none; cursor: pointer;
+  transition: background-color var(--ds-dur) var(--ds-ease), border-color var(--ds-dur) var(--ds-ease), color var(--ds-dur) var(--ds-ease);
+}
+:root[data-design] :is(.btn, .pager-buttons button, .env-compare-table button):hover { background: var(--ds-surface-3); border-color: var(--ds-text-3); filter: none; }
+:root[data-design] :is(.btn, .pager-buttons button):active { background: var(--ds-surface-3); transform: translateY(0.5px); }
+:root[data-design] :is(.btn, .pager-buttons button):disabled { color: var(--ds-text-3); background: var(--ds-surface-2); border-color: var(--ds-line); opacity: 1; cursor: not-allowed; }
+:root[data-design] :is(.btn-primary, .login-submit) { color: var(--ds-accent-ink); background: var(--ds-accent); border-color: var(--ds-accent); }
+:root[data-design] :is(.btn-primary, .login-submit):hover { background: var(--ds-accent-hover); border-color: var(--ds-accent-hover); filter: none; }
+
+/* Copier : action secondaire discrète, toujours le même gabarit */
+:root[data-design] button.copy {
+  min-height: 22px; padding: 0 var(--ds-s2);
+  font-family: var(--ds-font); font-size: var(--ds-fs-xs); font-weight: var(--ds-fw-medium); line-height: 1;
+  color: var(--ds-accent-text); background: transparent; border: 1px solid var(--ds-line); border-radius: var(--ds-r-sm);
+  transition: background-color var(--ds-dur) var(--ds-ease), border-color var(--ds-dur) var(--ds-ease);
+}
+:root[data-design] button.copy:hover { background: var(--ds-accent-soft); border-color: var(--ds-accent-text); transform: none; }
+:root[data-design] .row-copy-text button.copy { border-color: transparent; color: var(--ds-text-2); font-size: var(--ds-fs-xs); border-radius: var(--ds-r-sm); padding: 0 var(--ds-s2); }
+:root[data-design] .row-copy-text button.copy:hover { color: var(--ds-accent-text); background: var(--ds-accent-soft); }
+
+:root[data-design] .icon-btn {
+  width: var(--ds-ctl-h); height: var(--ds-ctl-h); color: var(--ds-text-2); background: transparent;
+  border: 1px solid transparent; border-radius: var(--ds-r-md); font-size: 20px; font-weight: 400;
+}
+:root[data-design] .icon-btn:hover { color: var(--ds-text); background: var(--ds-surface-3); }
+
+/* ---------- 5. Champs ---------- */
+:root[data-design] :is(label.search, .search-trigger, .login-form input, .pager-size select, .filter-select) {
+  min-height: var(--ds-ctl-h); height: var(--ds-ctl-h);
+  color: var(--ds-text-2); background: var(--ds-surface); border: 1px solid var(--ds-line-strong); border-radius: var(--ds-r-md);
+  font-family: var(--ds-font); font-size: var(--ds-fs-sm); box-shadow: none;
+  transition: border-color var(--ds-dur) var(--ds-ease), box-shadow var(--ds-dur) var(--ds-ease);
+}
+:root[data-design] label.search { padding: 0 var(--ds-s3); gap: var(--ds-s2); }
+:root[data-design] label.search input { height: 100%; padding: 0; color: var(--ds-text); font-family: var(--ds-font); font-size: var(--ds-fs-sm); background: transparent; }
+:root[data-design] label.search input::placeholder { color: var(--ds-text-3); }
+:root[data-design] :is(label.search, .search-trigger):hover { border-color: var(--ds-text-3); }
+:root[data-design] label.search:focus-within { border-color: var(--ds-focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-focus) 18%, transparent); }
+:root[data-design] label.search input:focus-visible { outline: none; }
+:root[data-design] .search-trigger { padding: 0 var(--ds-s2) 0 var(--ds-s3); gap: var(--ds-s2); }
+:root[data-design] kbd {
+  padding: 2px 5px; font-size: 10.5px; line-height: 1.2; color: var(--ds-text-2);
+  background: var(--ds-surface-2); border: 1px solid var(--ds-line); border-radius: var(--ds-r-sm); box-shadow: none;
+}
+
+/* Sélecteur d'environnement : contrôle segmenté */
+:root[data-design] .env-switch { padding: 2px; gap: 0; background: var(--ds-surface-3); border-radius: var(--ds-r-md); box-shadow: none; }
+:root[data-design] .env-switch button {
+  min-height: calc(var(--ds-ctl-h) - 4px); padding: 0 var(--ds-s3);
+  font-family: var(--ds-font); font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-medium); letter-spacing: 0.02em;
+  color: var(--ds-text-2); background: transparent; border: 0; border-radius: calc(var(--ds-r-md) - 1px); box-shadow: none;
+  transition: background-color var(--ds-dur) var(--ds-ease), color var(--ds-dur) var(--ds-ease);
+}
+:root[data-design] .env-switch button:hover { color: var(--ds-text); }
+/* !important : la feuille d'origine fige cet état avec !important, on doit faire de même pour le reprendre */
+:root[data-design] .env-switch button[aria-pressed="true"],
+:root[data-design] .env-switch button[aria-pressed="true"]:hover { color: var(--ds-env-on-text, var(--ds-accent-ink)) !important; background: var(--ds-env-on-bg, var(--ds-accent)) !important; box-shadow: none !important; }
+/* EXP = production : repère discret et constant */
+:root[data-design] .env-switch button[data-prod]::after { content: ""; width: 5px; height: 5px; margin-left: 6px; border-radius: 50%; background: var(--ds-err); }
+
+/* Filtres rapides : groupes libellés, puces sobres */
+:root[data-design] .toolbar { align-items: center; gap: var(--ds-s3) var(--ds-s5); margin: 0 0 var(--ds-s3); }
+:root[data-design] .toolbar label.search { flex: 0 1 340px; width: auto; }
+:root[data-design] .filter-group { gap: var(--ds-s3); }
+:root[data-design] .filter-label { display: none; }
+:root[data-design] :is(.filter-chip-groups, .api-filter-group .filter-chip-groups) { gap: var(--ds-s4); flex-wrap: wrap; overflow: visible; }
+:root[data-design] :is(.filter-chip-group, .api-filter-group .filter-chip-group) { min-height: 0; padding: 0; gap: var(--ds-s2); background: none; border: 0; border-radius: 0; }
+:root[data-design] :is(.filter-chip-group-label, .api-filter-group .filter-chip-group-label) { padding: 0; font-size: var(--ds-label-size); }
+:root[data-design] :is(.filter-chip-group .filter-chips, .api-filter-group .filter-chip-group .filter-chips) { gap: var(--ds-s1); }
+:root[data-design] :is(.chip, .filter-chip-group .chip, .api-filter-group .filter-chip-group .chip) {
+  min-height: 26px; padding: 0 var(--ds-s2);
+  font-family: var(--ds-font); font-size: var(--ds-fs-xs); font-weight: var(--ds-fw-medium); letter-spacing: 0;
+  color: var(--ds-text-2); background: var(--ds-surface); border: 1px solid var(--ds-line-strong); border-radius: var(--ds-r-sm); box-shadow: none;
+  transition: background-color var(--ds-dur) var(--ds-ease), color var(--ds-dur) var(--ds-ease), border-color var(--ds-dur) var(--ds-ease);
+}
+:root[data-design] :is(.chip, .filter-chip-group .chip):is(:hover, :focus-visible) { color: var(--ds-text); border-color: var(--ds-text-3); box-shadow: none; }
+:root[data-design] :is(.chip, .filter-chip-group .chip, .api-filter-group .filter-chip-group .chip).active { color: var(--ds-accent-ink); background: var(--ds-accent); border-color: var(--ds-accent); }
+:root[data-design] .chip-count { font-family: var(--ds-font-mono); font-size: 10.5px; }
+
+/* ---------- 6. Indicateurs ---------- */
+:root[data-design] :is(.pill, .api-type, .env-tag) {
+  min-height: 20px; padding: 0 6px;
+  font-family: var(--ds-font); font-size: var(--ds-fs-xs); font-weight: var(--ds-fw-medium); letter-spacing: 0; text-transform: none; line-height: 1;
+  color: var(--ds-text-2); background: var(--ds-surface-3); border: 0; border-radius: var(--ds-r-pill);
+}
+:root[data-design] .api-type { font-family: var(--ds-font-mono); font-size: 10.5px; color: var(--ds-text-2); background: transparent; border: 1px solid var(--ds-line); }
+:root[data-design] .pill:is(.ok, [data-state="OK"], [data-tone="ok"]) { color: var(--ds-ok); background: var(--ds-ok-bg); }
+:root[data-design] .pill:is(.warn, [data-tone="warning"]) { color: var(--ds-warn); background: var(--ds-warn-bg); }
+:root[data-design] .pill:is(.err, [data-state="ERROR"], [data-tone="error"]) { color: var(--ds-err); background: var(--ds-err-bg); }
+
+/* Bandeau d'état : filet latéral plutôt qu'un cadre rouge plein */
+:root[data-design] .banner {
+  margin: 0 0 var(--ds-s5); padding: var(--ds-s2) var(--ds-s3);
+  font-size: var(--ds-fs-sm); line-height: 1.45; color: var(--ds-text);
+  background: var(--ds-surface); border: 1px solid var(--ds-line); border-left: 3px solid var(--ds-text-3); border-radius: var(--ds-r-md);
+}
+:root[data-design] .banner-error { color: var(--ds-err); background: var(--ds-err-bg); border-color: color-mix(in srgb, var(--ds-err) 22%, transparent); border-left-color: var(--ds-err); }
+:root[data-design] :is(.state-msg, .detail-msg) { color: var(--ds-text-2); font-size: var(--ds-fs-sm); }
+
+/* Parcours DEV → EXP */
+:root[data-design] .journey-step { width: 9px; height: 9px; margin-right: 14px; border-width: 1.5px; border-color: var(--dot-off); background: var(--ds-surface); }
+:root[data-design] .journey-step:last-child { margin-right: 0; }
+:root[data-design] .journey-step.deployed { border-color: var(--ds-signal); background: var(--ds-signal); }
+:root[data-design] .journey-step:not(:last-child)::after { width: 14px; height: 1.5px; }
+:root[data-design] .journey-step[data-label]::before { padding: 3px 6px; font-family: var(--ds-font); font-size: 11px; font-weight: var(--ds-fw-medium); border-radius: var(--ds-r-sm); box-shadow: none; }
+:root[data-design] .journey-step[data-label]:is(:hover, :focus-visible) { border-color: var(--ds-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-signal) 20%, transparent); }
+
+/* ---------- 7. Tableaux ---------- */
+:root[data-design] .table-wrap { background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: var(--ds-r-md); }
+:root[data-design] table.list { font-size: var(--ds-fs-sm); }
+:root[data-design] :is(table.list > thead th, .table-wrap table.list > thead th) {
+  padding: var(--ds-s2) var(--ds-cell-x); background: var(--ds-surface-2); border-bottom: 1px solid var(--ds-line-strong); white-space: nowrap;
+}
+:root[data-design] button.sort { gap: var(--ds-s1); color: inherit; }
+:root[data-design] button.sort:hover { color: var(--ds-text); }
+:root[data-design] :is(table.list > tbody > tr.row > *, .table-wrap table.list > tbody > tr.row > th, .table-wrap table.list > tbody > tr.row > td) {
+  padding: var(--ds-cell-y) var(--ds-cell-x); font-size: var(--ds-fs-sm); line-height: 1.4; letter-spacing: 0;
+  border-bottom: 1px solid var(--ds-line); background: transparent;
+  transition: background-color var(--ds-dur) var(--ds-ease);
+}
+:root[data-design] table.list > tbody > tr.row > th { font-weight: var(--ds-fw-strong); }
+:root[data-design] table.list > tbody > tr.row:hover > * { background: var(--ds-surface-2); }
+:root[data-design] table.list > tbody.open > tr.row > * { background: var(--ds-sel-bg); border-bottom-color: var(--ds-line); }
+:root[data-design] table.list > tbody.open > tr.row > :first-child { box-shadow: inset 2px 0 0 var(--ds-sel-edge); }
+:root[data-design] .row-title-button { font-family: var(--ds-font); font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-strong); letter-spacing: 0; color: var(--ds-text); border-radius: var(--ds-r-sm); }
+:root[data-design] .row-title-button:hover { color: var(--ds-accent-text); text-decoration: underline; text-underline-offset: 3px; }
+:root[data-design] table.list :is(.mono, .url, .client-id) { font-size: calc(var(--ds-fs-sm) - 0.5px); }
+:root[data-design] table.list td.num, :root[data-design] table.list th.num { text-align: right; }
+
+/* Tableau « environnements comparés » : même grammaire que les autres tableaux */
+:root[data-design] .env-compare-panel .env-compare-wrap { background: transparent; border-radius: 0; box-shadow: none; }
+:root[data-design] .env-compare-compact { border-collapse: collapse; border-spacing: 0; }
+:root[data-design] .env-compare-compact thead th { padding: var(--ds-s2) var(--ds-cell-x); background: transparent; border-bottom: 1px solid var(--ds-line-strong); }
+:root[data-design] .env-compare-compact tbody :is(th, td) { padding: var(--ds-cell-y) var(--ds-cell-x); background: transparent; border-bottom: 1px solid var(--ds-line); border-radius: 0; font-size: var(--ds-fs-sm); }
+:root[data-design] .env-compare-compact tbody tr:last-child :is(th, td) { border-bottom: 0; }
+:root[data-design] .env-compare-env { font-weight: var(--ds-fw-strong); letter-spacing: 0.02em; }
+:root[data-design] .env-compare-compact .env-compare-value { font-family: var(--ds-font); font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-strong); }
+:root[data-design] .env-compare-compact .env-compare-note { font-size: var(--ds-fs-xs); color: var(--ds-text-2); }
+:root[data-design] .sync-state { font-size: var(--ds-fs-sm); }
+:root[data-design] .sync-state[data-state="ERROR"] { font-weight: var(--ds-fw-medium); }
+
+/* Pagination */
+:root[data-design] .pager { margin-top: var(--ds-s3); font-size: var(--ds-fs-sm); color: var(--ds-text-2); }
+
+/* ---------- 8. Accueil ---------- */
+:root[data-design] .splunk-hero::before { content: none; }
+:root[data-design] .splunk-hero-head { margin-bottom: var(--ds-s3); align-items: baseline; }
+:root[data-design] :is(.splunk-note, .splunk-hero-head .splunk-note) { margin: 0; font-size: var(--ds-fs-xs); color: var(--ds-text-3); }
+:root[data-design] .splunk-metric-grid { gap: 0; border: 1px solid var(--ds-line); border-radius: var(--ds-r-md); overflow: hidden; }
+:root[data-design] .splunk-metric-card {
+  padding: var(--ds-s4); background: var(--ds-surface); border: 0; border-left: 1px solid var(--ds-line); border-radius: 0; box-shadow: none;
+}
+:root[data-design] .splunk-metric-card:first-child { border-left: 0; }
+:root[data-design] .splunk-trend { font-size: var(--ds-fs-xs); }
+:root[data-design] .splunk-metric-value {
+  margin-top: var(--ds-s2); font-family: var(--ds-font-display); font-size: var(--ds-fs-metric); font-weight: var(--ds-fw-display);
+  letter-spacing: var(--ds-track-display); line-height: 1.1; color: var(--ds-text);
+}
+:root[data-design] .splunk-metric-card[data-tone="error"] .splunk-metric-value { color: var(--ds-err); }
+:root[data-design] .splunk-metric-card[data-tone="warning"] .splunk-metric-value { color: var(--ds-text); }
+:root[data-design] .splunk-metric-card[data-tone="info"] .splunk-metric-value { color: var(--ds-text); }
+:root[data-design] .splunk-meter { height: 2px; margin-top: var(--ds-s3); border-radius: 0; background: var(--ds-line); }
+:root[data-design] .splunk-meter span { border-radius: 0; background: var(--ds-text-3); }
+:root[data-design] .splunk-metric-card[data-tone="error"] .splunk-meter span { background: var(--ds-err); }
+:root[data-design] .splunk-metric-card[data-tone="warning"] .splunk-meter span { background: var(--ds-warn); }
+:root[data-design] .splunk-metric-card p { margin-top: var(--ds-s2); font-size: var(--ds-fs-xs); color: var(--ds-text-2); line-height: 1.4; }
+
+:root[data-design] .focus-items { display: block; }
+:root[data-design] .focus-item {
+  min-height: 0; padding: var(--ds-cell-y) 0; gap: var(--ds-s3);
+  font-size: var(--ds-fs-sm); color: var(--ds-text); text-decoration: none;
+  border-bottom: 1px solid var(--ds-line); border-radius: 0;
+  transition: background-color var(--ds-dur) var(--ds-ease);
+}
+:root[data-design] .focus-item:last-child { border-bottom: 0; }
+:root[data-design] .focus-item:hover { background: var(--ds-surface-2); }
+:root[data-design] .focus-item strong { font-weight: var(--ds-fw-strong); }
+:root[data-design] .focus-item .pill { background: transparent; padding: 0; color: var(--ds-text-2); font-weight: 400; }
+
+:root[data-design] :is(.callout, .callout-stack) { align-items: flex-start; gap: var(--ds-s2); background: var(--ds-surface-2); border: var(--ds-panel-border); }
+:root[data-design] .callout p { margin: 0; color: var(--ds-text-2); font-size: var(--ds-fs-sm); }
+:root[data-design] .callout-actions { margin-top: var(--ds-s2); }
+
+:root[data-design] .conn { gap: var(--ds-s3) var(--ds-s6); }
+:root[data-design] .conn dt { padding-top: 3px; font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-medium); color: var(--ds-text-2); }
+:root[data-design] :is(.conn-line, .url-list li) { padding: 2px 0; gap: var(--ds-s1) var(--ds-s3); }
+:root[data-design] :is(.url-list .url, .conn-line .url, .conn .url) { font-size: var(--ds-fs-sm); font-weight: 400; letter-spacing: 0; color: var(--ds-text); }
+:root[data-design] .conn-hint { margin-top: var(--ds-s1); font-size: var(--ds-fs-xs); color: var(--ds-text-3); }
+
+:root[data-design] .app-footer { padding: var(--ds-s4) var(--ds-page-x) var(--ds-s6); font-size: var(--ds-fs-xs); color: var(--ds-text-3); text-align: left; }
+
+/* ---------- 9. Volet de détail ---------- */
+:root[data-design] .drawer-backdrop { background: var(--ds-overlay); }
+:root[data-design] .side-drawer { background: var(--ds-surface); border: 0; border-radius: var(--ds-r-lg); box-shadow: var(--ds-shadow-3); }
+:root[data-design] .side-drawer-head { padding: var(--ds-s4) var(--ds-s5); gap: var(--ds-s4); border-bottom: 1px solid var(--ds-line); align-items: flex-start; }
+:root[data-design] .side-drawer-head .eyebrow { margin: 0 0 2px; }
+:root[data-design] .side-drawer-head h3 { margin: 0; font-size: calc(var(--ds-fs-h2) + 3px); font-weight: var(--ds-fw-display); letter-spacing: var(--ds-track-display); line-height: 1.25; }
+:root[data-design] .drawer-sub { margin: 2px 0 0; font-size: var(--ds-fs-xs); }
+:root[data-design] .side-drawer-body { padding: 0 var(--ds-s5) var(--ds-s5); gap: 0; align-content: start; }
+:root[data-design] .side-drawer-body > .drawer-section {
+  padding: var(--ds-s4) 0; background: transparent; border: 0; border-bottom: 1px solid var(--ds-line); border-radius: 0; box-shadow: none;
+}
+:root[data-design] .side-drawer-body > .drawer-section:last-child { border-bottom: 0; }
+:root[data-design] .side-drawer-body > .drawer-section::before { content: none; }
+:root[data-design] .drawer-section h4 { margin: 0 0 var(--ds-s3); }
+:root[data-design] .mini-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; }
+:root[data-design] .mini-kpis > span {
+  display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 2px;
+  padding: 0 var(--ds-s3); background: transparent; border: 0; border-left: 1px solid var(--ds-line); border-radius: 0;
+  font-size: var(--ds-fs-xs); color: var(--ds-text-2); line-height: 1.3;
+}
+:root[data-design] .mini-kpis > span:first-child { padding-left: 0; border-left: 0; }
+:root[data-design] .mini-kpis strong { font-family: var(--ds-font); font-size: var(--ds-fs-md); font-weight: var(--ds-fw-strong); color: var(--ds-text); line-height: 1.3; }
+:root[data-design] .owner-list { margin: var(--ds-s3) 0 0; display: grid; gap: 0; }
+:root[data-design] .runtime-list { margin-top: 0; }
+:root[data-design] .owner-list > div { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--ds-s3); padding: 5px 0; border: 0; border-top: 1px solid var(--ds-line); background: none; border-radius: 0; }
+:root[data-design] .owner-list > div:first-child { border-top: 0; }
+:root[data-design] .owner-list dt { margin: 0; padding-top: 2px; }
+:root[data-design] .owner-list dd { margin: 0; font-size: var(--ds-fs-sm); color: var(--ds-text); overflow-wrap: anywhere; }
+:root[data-design] .drawer-list { margin: 0; padding: 0; }
+:root[data-design] .drawer-list li { padding: var(--ds-s2) 0; border: 0; border-top: 1px solid var(--ds-line); border-radius: 0; background: none; font-size: var(--ds-fs-sm); }
+:root[data-design] .drawer-list li:first-child { border-top: 0; padding-top: 0; }
+:root[data-design] .drawer-list .muted { font-size: var(--ds-fs-xs); }
+:root[data-design] .mini-map-node { padding: var(--ds-s2) var(--ds-s3); gap: 2px; background: var(--ds-surface-2); border: 1px solid var(--ds-line); border-radius: var(--ds-r-md); box-shadow: none; }
+:root[data-design] .mini-map-node strong { font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-strong); overflow-wrap: anywhere; }
+:root[data-design] .mini-map-arrow { color: var(--ds-text-3); }
+:root[data-design] .drawer-journey-point { border-radius: var(--ds-r-md); font-family: var(--ds-font); font-size: var(--ds-fs-xs); }
+:root[data-design] .drawer-journey-point:hover { background: var(--ds-surface-2); }
+:root[data-design] .drawer-journey-point strong { font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-strong); color: var(--ds-text); }
+:root[data-design] .drawer-actions { gap: var(--ds-s2); }
+
+/* ---------- 10. Recherche globale ---------- */
+:root[data-design] .palette-backdrop { background: var(--ds-overlay); backdrop-filter: none; }
+:root[data-design] .palette { background: var(--ds-surface); border: 0; border-radius: var(--ds-r-lg); box-shadow: var(--ds-shadow-2); overflow: hidden; }
+:root[data-design] .palette-input { padding: var(--ds-s3) var(--ds-s4); border-bottom: 1px solid var(--ds-line); }
+:root[data-design] .palette-input input { font-family: var(--ds-font); font-size: var(--ds-fs-md); color: var(--ds-text); }
+:root[data-design] .palette-input input:focus-visible { outline: none; }
+:root[data-design] .palette-group-title { padding: var(--ds-s3) var(--ds-s4) var(--ds-s1); }
+:root[data-design] .palette-option { padding: var(--ds-s2) var(--ds-s4); border-radius: 0; font-family: var(--ds-font); font-size: var(--ds-fs-sm); color: var(--ds-text); }
+:root[data-design] .palette-option:is(.active, :hover) { background: var(--ds-sel-bg); box-shadow: inset 2px 0 0 var(--ds-sel-edge); }
+:root[data-design] .palette-kind { font-size: 10.5px; font-weight: var(--ds-fw-medium); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ds-text-3); background: none; padding: 0; }
+:root[data-design] .palette-title { font-weight: var(--ds-fw-strong); }
+:root[data-design] .palette-action { font-size: var(--ds-fs-xs); color: var(--ds-text-2); }
+:root[data-design] .palette-status { padding: var(--ds-s2) var(--ds-s4); font-size: var(--ds-fs-xs); color: var(--ds-text-3); border-top: 1px solid var(--ds-line); }
+
+/* ---------- 11. Menu utilisateur, horloges ---------- */
+:root[data-design] .team-clocks { gap: var(--ds-s4); }
+:root[data-design] .team-clock { gap: 0; }
+:root[data-design] .team-clock-city { font-size: 10px; }
+:root[data-design] .team-clock time { font-size: var(--ds-fs-xs); font-weight: 500; color: var(--ds-text); }
+:root[data-design] .user-menu-trigger {
+  min-height: var(--ds-ctl-h); padding: 0 var(--ds-s3); gap: var(--ds-s2);
+  font-family: var(--ds-font); font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-medium);
+  color: var(--ds-text); background: transparent; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-r-md);
+}
+:root[data-design] :is(.user-menu-trigger:hover, .user-menu-trigger:focus-visible, .user-menu.open .user-menu-trigger) { background: var(--ds-surface-3); }
+:root[data-design] .user-menu-panel { padding: var(--ds-s2); background: var(--ds-surface); border: 0; border-radius: var(--ds-r-lg); box-shadow: var(--ds-shadow-2); }
+:root[data-design] .user-menu-panel > * { border-radius: var(--ds-r-sm); }
+:root[data-design] .user-menu-logout { font-family: var(--ds-font); font-size: var(--ds-fs-sm); color: var(--ds-err); border-radius: var(--ds-r-sm); }
+:root[data-design] :is(.lang-toggle, .theme-toggle) { background: var(--ds-surface-3); border-radius: var(--ds-r-md); border: 0; font-family: var(--ds-font); font-size: var(--ds-fs-xs); }
+:root[data-design] :is(.lang-toggle, .theme-toggle)::before { border-radius: calc(var(--ds-r-md) - 1px); background: var(--ds-surface); box-shadow: 0 0 0 1px var(--ds-line-strong); }
+:root[data-design] .theme-toggle[aria-pressed="true"]::before { background: var(--ds-surface); }
+
+/* ---------- 12. Connexion ---------- */
+:root[data-design] .login-page { background: var(--ds-bg); }
+:root[data-design] .login-card { padding: var(--ds-s7); background: var(--ds-surface); border: var(--ds-panel-border); border-radius: var(--ds-r-lg); box-shadow: var(--ds-shadow-1); }
+:root[data-design] .login-form input { padding: 0 var(--ds-s3); color: var(--ds-text); }
+:root[data-design] .login-form input:focus-visible { outline: none; border-color: var(--ds-focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-focus) 18%, transparent); }
+:root[data-design] .login-submit { min-height: calc(var(--ds-ctl-h) + 4px); border-radius: var(--ds-r-md); font-family: var(--ds-font); font-weight: var(--ds-fw-medium); }
+:root[data-design] .login-lede { color: var(--ds-text-2); }
+
+/* ---------- 13. Aide ---------- */
+:root[data-design] .help-section-card p { max-width: 80ch; color: var(--ds-text-2); }
+:root[data-design] .help-section-card .table-wrap { margin-top: var(--ds-s3); }
+:root[data-design] .help-section-card table.list :is(th, td) { padding: var(--ds-cell-y) var(--ds-cell-x); border-bottom: 1px solid var(--ds-line); font-size: var(--ds-fs-sm); vertical-align: top; }
+:root[data-design] .help-section-card table.list tbody tr:last-child :is(th, td) { border-bottom: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-design] * { transition-duration: 0ms !important; }
+}
+@media (max-width: 720px) {
+  :root[data-design] .mini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--ds-s3); }
+  :root[data-design] .mini-kpis > span:nth-child(odd) { padding-left: 0; border-left: 0; }
+  :root[data-design] .splunk-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :root[data-design] .owner-list > div { grid-template-columns: 1fr; gap: 0; }
+}
+
+/* ---------- 14. Tableau des API : lignes de hauteur constante ----------
+   L'URL complète du backend reste lisible et copiable dans le volet ; ici on privilégie le balayage. */
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(1) { width: 17%; }
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(2) { width: 6%; }
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(3) { width: 15%; }
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(4) { width: 5%; }
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(5) { width: 8%; }
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(6) { width: auto; }
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(7) { width: 11%; }
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(8) { width: 9%; }
+:root[data-design] .api-table-wrap table.api-table :is(th, td):nth-child(9) { width: 118px; }
+:root[data-design] .api-table-wrap table.api-table > tbody > tr.row > td:is(:nth-child(3), :nth-child(6), :nth-child(7)) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+:root[data-design] .api-table-wrap table.api-table :is(.url, .gateway-stack) { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root[data-design] .api-table-wrap table.api-table > tbody > tr.row > td:nth-child(3) { font-size: calc(var(--ds-fs-sm) - 0.5px); letter-spacing: 0; }
+:root[data-design] .api-table-wrap table.api-table .row-title-button { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+:root[data-design] table.list > thead th { overflow: hidden; text-overflow: ellipsis; }
+
+/* Étape courante du parcours : anneau fin, sans halo */
+:root[data-design] :is(.journey-step.current, .drawer-journey-point.current .journey-step) { box-shadow: 0 0 0 2px var(--ds-surface), 0 0 0 3px var(--ds-signal); }
+:root[data-design] table.list > tbody.open .journey-step.current { box-shadow: 0 0 0 2px var(--ds-sel-bg), 0 0 0 3px var(--ds-signal); }
+:root[data-design] .api-mini-map { align-items: stretch; }
+:root[data-design] .mini-map-arrow { align-self: center; }
+:root[data-design] .mini-kpis strong { font-size: var(--ds-fs-base); }
+:root[data-design] .mini-map-node, :root[data-design] .mini-map-node:is(.consumers, .gateways, .backends) { height: 100%; align-content: start; background: var(--ds-surface-2); }
+
+/* ---------- 15. Guide « Comprendre WSO2 » (Shadow DOM) ----------
+   Le guide lit ses propres variables sur son hôte : on les alimente avec les tokens du design actif.
+   Ses scènes animées sombres restent identiques dans tous les designs. */
+:root[data-design] .understand-wso2-native {
+  --bg: var(--ds-surface); --surface: var(--ds-surface); --border: var(--ds-line); --fg: var(--ds-text); --muted: var(--ds-text-2);
+  --brand: var(--ds-brand); --accent: var(--ds-accent-text); --mute-bg: var(--ds-surface-3);
+  --font: var(--ds-font); --display: var(--ds-font-display); --mono: var(--ds-font-mono); --st-or: var(--ds-brand);
+  background: var(--ds-surface);
+}
+:root[data-design] .understand-wso2-native-panel { padding: 0; overflow: hidden; }
+:root[data-design] .help-page-head { border-bottom: 0; padding-bottom: 0; }
+:root[data-design] .login-card :is(h1, h2) { font-size: var(--ds-fs-h1); font-weight: var(--ds-fw-display); letter-spacing: var(--ds-track-display); line-height: 1.2; }
+:root[data-design] .login-form label { font-size: var(--ds-fs-sm); font-weight: var(--ds-fw-medium); color: var(--ds-text); }
+@media (max-width: 900px) {
+  /* Tableau des API : on garde des colonnes lisibles et on fait défiler horizontalement */
+  :root[data-design] .api-table-wrap.table-wrap { overflow-x: auto; }
+  :root[data-design] .api-table-wrap table.api-table { min-width: 880px; }
+}
+@media (max-width: 760px) {
+  /* La colonne « copier » reste collée à droite : il lui faut un fond opaque */
+  :root[data-design] table.list > tbody > tr.row > td.copy-col { background: var(--ds-surface); box-shadow: -1px 0 0 var(--ds-line); }
+  :root[data-design] table.list > thead th.copy-col { background: var(--ds-surface-2); }
+  :root[data-design] table.list > tbody.open > tr.row > td.copy-col { background: var(--ds-sel-bg); }
+}
+
+/* ---------- 16. États vides ---------- */
+:root[data-design] :is(.drawer-miss, .bar-empty, .ts-empty) {
+  padding: var(--ds-s3); font-size: var(--ds-fs-sm); color: var(--ds-text-2);
+  background: var(--ds-surface-2); border: 1px solid var(--ds-line); border-radius: var(--ds-r-md);
+}
