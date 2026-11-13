@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Injecte le Design System (directions graphiques + sélecteur) dans un export statique du portail.
+"""Injecte le Design System dans un export statique du portail, pour démonstration.
 
 Usage : python3 tools/build-preview.py <export.html> <sortie.html>
 
@@ -26,10 +26,11 @@ def inline_art(css: str) -> str:
 css = inline_fonts((here / "design-fonts.css").read_text(encoding="utf-8"))
 for name in ("design-tokens.css", "design-components.css", "design-layouts.css", "design-motion.css"):
     css += "\n" + inline_art((here / name).read_text(encoding="utf-8"))
-js = "\n".join((here / n).read_text(encoding="utf-8") for n in ("design-switcher.js", "design-motion.js", "design-b-extras.js")).replace("</script", "<\\/script")
+# Dans l'application, l'attribut est écrit en dur sur <html> (index.html) ; l'export, lui, n'est pas retouché.
+js = "document.documentElement.setAttribute('data-design', 'b');\n" + "\n".join((here / n).read_text(encoding="utf-8") for n in ("design-motion.js", "design-b-extras.js")).replace("</script", "<\\/script")
 
 html = src.read_text(encoding="utf-8")
-block = f'<style id="design-system">\n{css}\n</style>\n<script id="design-switcher-script">\n{js}\n</script>\n'
+block = f'<style id="design-system">\n{css}\n</style>\n<script id="design-system-script">\n{js}\n</script>\n'
 # Le premier </head> du fichier peut appartenir à un document embarqué en JSON : on vise celui qui précède <body>.
 i = re.search(r"</head>\s*<body", html).start()
 out.write_text(html[:i] + block + html[i:], encoding="utf-8")

@@ -1,12 +1,12 @@
-// Parcours fonctionnel identique sur l'original et sur chaque design : les résultats doivent être les mêmes.
+// Parcours fonctionnel identique sur l'export d'origine et sur l'export avec le design : les résultats doivent être les mêmes.
+// Usage : node verify-parity.js <export.html> <export-avec-design.html>
 const { chromium } = require('playwright');
 (async () => {
-  const file = process.argv[2]; const b = await chromium.launch(); const out = {};
-  for (const d of ['o', 'a', 'b', 'c', 'd']) {
+  const files = { original: process.argv[2], design: process.argv[3] }; const b = await chromium.launch(); const out = {};
+  for (const d of ['original', 'design']) {
     const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
-    await ctx.addInitScript(d => localStorage.setItem('api-portal-design', d), d);
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-    await p.goto('file://' + file); await p.waitForTimeout(2200);
+    await p.goto('file://' + files[d]); await p.waitForTimeout(2200);
     const r = {}; const rows = () => p.locator('table.list tbody tr.row').count();
     const nav = async i => { await p.locator('.sidebar nav button').nth(i).click(); await p.waitForTimeout(700); };
     r.homeCounts = await p.locator('.catalog-strip strong').allTextContents();
@@ -43,7 +43,8 @@ const { chromium } = require('playwright');
     r.errors = errs;
     out[d] = JSON.stringify(r); await ctx.close();
   }
-  console.log(out.o);
-  for (const d of ['a', 'b', 'c', 'd']) console.log(d, out[d] === out.o ? 'IDENTIQUE à l\'original' : 'DIFF ' + out[d]);
+  console.log(out.original);
+  console.log(out.design === out.original ? 'IDENTIQUE à l\'original' : 'DIFF ' + out.design);
+  if (out.design !== out.original) process.exitCode = 1;
   await b.close();
 })();
