@@ -51,7 +51,7 @@
 
   /* ---------- Élément actif partagé ---------- */
   const GROUPS = [
-    { container: '.sidebar nav', current: ':scope > button.active', axis: 'y' },
+    { container: '.sidebar nav', current: ':scope > button.active', axis: 'y', drag: true },
     { container: '.env-switch', current: ':scope > button[aria-pressed="true"]', axis: 'x' },
   ];
   const last = new WeakMap();
@@ -69,9 +69,10 @@
     p.from.removeAttribute('data-motion-leaving');
   }
 
-  function glide(container, from, to, axis, hold) {
+  /* `origin` : position de départ si la pastille est déjà en route (appui glissé), sinon celle de `from` */
+  function glide(container, from, to, axis, hold, origin) {
     const box = container.getBoundingClientRect();
-    const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+    const a = origin || from.getBoundingClientRect(), b = to.getBoundingClientRect();
     if (!a.width || !b.width) return;
     settle(container);
     container.querySelectorAll(':scope > .motion-thumb').forEach((t) => t.remove());
@@ -87,8 +88,8 @@
     const anim = thumb.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: mid }, { transform: 'none' }], { duration: 280, easing: IN_OUT });
     if (hold) {
       /* Parti au clic : la pastille reste posée jusqu'à ce que l'application rende l'élément actif */
-      from.setAttribute('data-motion-leaving', '');
-      pending.set(container, { thumb, from, to, done: false, timer: setTimeout(() => settle(container), 2500) });
+      if (from !== to) from.setAttribute('data-motion-leaving', '');
+      pending.set(container, { thumb, from, to, done: false, timer: drag ? 0 : setTimeout(() => settle(container), 2500) });
       const arrived = () => { const p = pending.get(container); if (p && p.thumb === thumb) { p.done = true; if (p.confirmed) settle(container); } };
       anim.finished.then(arrived, arrived);
       return;
@@ -114,39 +115,73 @@
 
   /* Le glissement part dès l'appui de la souris, sans attendre le clic ni le rendu de la page demandée :
      la pastille est déjà en route (sur le compositeur) quand l'application occupe le fil principal.
-     Au clavier et au toucher, il part au clic. On n'intercepte rien. */
-  function start(event, press) {
-    if (!active() || !(event.target instanceof Element)) return;
+     Au clavier et au toucher, il part au clic. */
+  function start(event) {
+    if (!active() || !(event.target instanceof Element)) return null;
     for (const g of GROUPS) {
       const container = document.querySelector(g.container);
       const to = container && event.target.closest(`${g.container} > button`);
       if (!to || to.disabled) continue;
       const p = pending.get(container);
-      if (p && p.to === to) continue;
       const from = container.querySelector(g.current);
-      if (from && from !== to) {
-        glide(container, from, to, g.axis, true);
-        last.set(container, to);
-        if (press) pending.get(container).press = true;
-      }
+      if (!from) continue;
+      if (from !== to && !(p && p.to === to)) { glide(container, from, to, g.axis, true); last.set(container, to); }
+      return { g, container, from, down: to, over: to };
     }
+    return null;
   }
-  /* Appui relâché ailleurs : pas de clic, la pastille revient à l'élément actif */
+
+  /* Appui maintenu et glissé (navigation) : la pastille et l'effet d'appui suivent le bouton survolé,
+     la destination se décide au relâchement. Relâché hors des boutons : retour à l'élément actif.
+     Le clic natif ne part que si l'appui et le relâchement ont lieu sur le même bouton ; sinon on
+     déclenche le clic du bouton d'arrivée, donc le gestionnaire de l'application, inchangé. */
+  let drag = null;
+  const press = (el) => { if (!drag) return; drag.container.querySelectorAll(':scope > [data-motion-press]').forEach((b) => b.removeAttribute('data-motion-press')); if (el) el.setAttribute('data-motion-press', ''); };
+  function moveTo(target) {
+    const { container, from, g } = drag;
+    const thumb = container.querySelector(':scope > .motion-thumb');
+    const origin = thumb ? thumb.getBoundingClientRect() : (drag.over || from).getBoundingClientRect();
+    drag.over = target;
+    glide(container, from, target || from, g.axis, true, origin);
+    last.set(container, target || from);
+  }
+  document.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    drag = start(event);
+    /* Tant que l'appui dure, la pastille ne doit pas être retirée par le délai de garde */
+    const held = drag && pending.get(drag.container);
+    if (held) { clearTimeout(held.timer); held.timer = 0; }
+    if (drag && drag.g.drag) { drag.container.setAttribute('data-motion-drag', ''); press(drag.down); }
+  }, true);
+  document.addEventListener('pointermove', (event) => {
+    if (!drag || !drag.g.drag || !(event.target instanceof Element)) return;
+    let over = event.target.closest(`${drag.g.container} > button`);
+    if (over && over.disabled) over = null;
+    if (over === drag.over) return;
+    press(over);
+    moveTo(over);
+  }, true);
   function release(event) {
-    for (const g of GROUPS) {
-      const container = document.querySelector(g.container);
-      const p = container && pending.get(container);
-      if (!p || !p.press) continue;
-      p.press = false;
-      if (event.type === 'pointerup' && event.target instanceof Element && p.to.contains(event.target)) continue;
-      settle(container);
-      last.set(container, p.from);
+    if (!drag) return;
+    const d = drag;
+    press(null);
+    drag = null;
+    d.container.removeAttribute('data-motion-drag');
+    const p = pending.get(d.container);
+    const on = event.type === 'pointerup' && event.target instanceof Element ? event.target.closest(`${d.g.container} > button`) : null;
+    const to = d.g.drag ? (on === d.over ? on : null) : (on === d.down ? on : null);
+    if (p) p.timer = setTimeout(() => settle(d.container), 2500);
+    if (!to || to === d.from) {
+      /* Rien à ouvrir : la pastille finit de revenir (ou est retirée) et l'actif reprend sa place */
+      if (p && p.to !== d.from) settle(d.container);
+      last.set(d.container, d.from);
+      return;
     }
+    if (to !== d.down) to.click();
   }
-  document.addEventListener('pointerdown', (event) => { if (event.pointerType === 'mouse' && event.button === 0) start(event, true); }, true);
   document.addEventListener('pointerup', release, true);
   document.addEventListener('pointercancel', release, true);
-  document.addEventListener('click', (event) => start(event, false), true);
+  document.addEventListener('click', (event) => { if (!drag) start(event); }, true);
 
   /* ---------- Réussite d'une copie ---------- */
   const restLabel = new WeakMap();
