@@ -52,7 +52,7 @@
   /* ---------- Élément actif partagé ---------- */
   const GROUPS = [
     { container: '.sidebar nav', current: ':scope > button.active', axis: 'y', drag: true },
-    { container: '.env-switch', current: ':scope > button[aria-pressed="true"]', axis: 'x' },
+    { container: '.env-switch', current: ':scope > button[aria-pressed="true"]', axis: 'x', drag: true },
   ];
   const last = new WeakMap();
 
@@ -131,7 +131,7 @@
     return null;
   }
 
-  /* Appui maintenu et glissé (navigation) : la pastille et l'effet d'appui suivent le bouton survolé,
+  /* Appui maintenu et glissé (navigation, environnement) : la pastille et l'effet d'appui suivent le bouton survolé,
      la destination se décide au relâchement. Relâché hors des boutons : retour à l'élément actif.
      Le clic natif ne part que si l'appui et le relâchement ont lieu sur le même bouton ; sinon on
      déclenche le clic du bouton d'arrivée, donc le gestionnaire de l'application, inchangé. */

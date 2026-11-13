@@ -71,9 +71,9 @@
   :root[data-design="b"] :is(.sidebar nav, .env-switch) > button { position: relative; z-index: 1; }
   :root[data-design="b"] .motion-thumb { position: absolute; z-index: 0; will-change: transform; margin: 0; pointer-events: none; background: var(--ds-raise-bg); border: 1px solid var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
   /* Appui maintenu et glissé : seul le bouton survolé est enfoncé */
-  :root[data-design="b"] .sidebar nav[data-motion-drag] { user-select: none; }
-  :root[data-design="b"] .sidebar nav[data-motion-drag] > button:active:not([data-motion-press]) { transform: none; }
-  :root[data-design="b"] .sidebar nav[data-motion-drag] > button[data-motion-press] { transform: scale(0.97); }
+  :root[data-design="b"] :is(.sidebar nav, .env-switch)[data-motion-drag] { user-select: none; }
+  :root[data-design="b"] :is(.sidebar nav, .env-switch)[data-motion-drag] > button:active:not([data-motion-press]) { transform: none; }
+  :root[data-design="b"] :is(.sidebar nav, .env-switch)[data-motion-drag] > button[data-motion-press] { transform: scale(0.97); }
   :root[data-design="b"] .sidebar nav > button:is([data-motion-landing], [data-motion-leaving]) { background: transparent; border-color: transparent; box-shadow: none; }
   :root[data-design="b"] .sidebar nav > button[data-motion-landing] { color: var(--ds-nav-text); }
   :root[data-design="b"] .sidebar nav > button[data-motion-leaving] { color: var(--ds-nav-muted); }
