@@ -3,7 +3,7 @@
  *
  * Isolé de l'application : aucun import, aucun appel réseau, aucun gestionnaire d'événement
  * applicatif touché. Le script observe le DOM et ajoute des éléments purement décoratifs :
- *   - sorties (menu, palette, volet, page) : une copie inerte de l'élément retiré joue la sortie,
+ *   - sorties (menu, palette, volet) : une copie inerte de l'élément retiré joue la sortie,
  *     20 % plus courte que l'entrée, vers son déclencheur ;
  *   - élément actif partagé (navigation, environnement) : une pastille glisse de l'ancien au
  *     nouveau, en ease-in-out, étirée de 12 % et sur une légère courbe ;
@@ -31,8 +31,6 @@
     { match: (n) => n.matches('.palette-backdrop'), ms: exit(220), frames: fade, inner: ['.palette', [{ transform: 'scale(1)' }, { transform: 'scale(0.95)' }]] },
     { match: (n) => n.matches('.side-drawer'), ms: exit(320), frames: [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(40px) scale(0.985)' }] },
     { match: (n) => n.matches('.drawer-backdrop'), ms: exit(320), frames: fade },
-    /* Changement de page : l'ancienne s'efface pendant que la nouvelle monte (états mêlés) */
-    { match: (n, parent) => parent.localName === 'main' && n.localName.startsWith('app-'), ms: 160, frames: fade, page: true },
   ];
 
   function playExit(node, parent, before, rule) {
@@ -42,8 +40,6 @@
     ghost.inert = true;
     ghost.removeAttribute('id');
     ghost.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-    /* La copie d'une page ne doit pas pousser la nouvelle : hauteur nulle, contenu débordant */
-    if (rule.page) ghost.style.cssText = 'display:block;height:0;overflow:visible;';
     parent.insertBefore(ghost, before && before.parentNode === parent ? before : null);
     const options = { duration: rule.ms, easing: OUT, fill: 'forwards' };
     if (rule.inner) { const el = ghost.querySelector(rule.inner[0]); if (el) el.animate(rule.inner[1], options); }
@@ -116,18 +112,41 @@
     }
   }
 
-  /* Le glissement part au clic, sans attendre que la page demandée soit chargée et rendue :
-     sinon la pastille ne bouge qu'après le rendu, ce qui se lit comme une latence. On n'intercepte rien. */
-  document.addEventListener('click', (event) => {
+  /* Le glissement part dès l'appui de la souris, sans attendre le clic ni le rendu de la page demandée :
+     la pastille est déjà en route (sur le compositeur) quand l'application occupe le fil principal.
+     Au clavier et au toucher, il part au clic. On n'intercepte rien. */
+  function start(event, press) {
     if (!active() || !(event.target instanceof Element)) return;
     for (const g of GROUPS) {
       const container = document.querySelector(g.container);
       const to = container && event.target.closest(`${g.container} > button`);
       if (!to || to.disabled) continue;
+      const p = pending.get(container);
+      if (p && p.to === to) continue;
       const from = container.querySelector(g.current);
-      if (from && from !== to) { glide(container, from, to, g.axis, true); last.set(container, to); }
+      if (from && from !== to) {
+        glide(container, from, to, g.axis, true);
+        last.set(container, to);
+        if (press) pending.get(container).press = true;
+      }
     }
-  }, true);
+  }
+  /* Appui relâché ailleurs : pas de clic, la pastille revient à l'élément actif */
+  function release(event) {
+    for (const g of GROUPS) {
+      const container = document.querySelector(g.container);
+      const p = container && pending.get(container);
+      if (!p || !p.press) continue;
+      p.press = false;
+      if (event.type === 'pointerup' && event.target instanceof Element && p.to.contains(event.target)) continue;
+      settle(container);
+      last.set(container, p.from);
+    }
+  }
+  document.addEventListener('pointerdown', (event) => { if (event.pointerType === 'mouse' && event.button === 0) start(event, true); }, true);
+  document.addEventListener('pointerup', release, true);
+  document.addEventListener('pointercancel', release, true);
+  document.addEventListener('click', (event) => start(event, false), true);
 
   /* ---------- Réussite d'une copie ---------- */
   const restLabel = new WeakMap();

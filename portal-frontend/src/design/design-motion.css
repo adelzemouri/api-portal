@@ -69,7 +69,7 @@
   /* ---------- Déplacement partagé de l'élément actif (posé par design-motion.js) ---------- */
   :root[data-design="b"] :is(.sidebar nav, .env-switch) { position: relative; }
   :root[data-design="b"] :is(.sidebar nav, .env-switch) > button { position: relative; z-index: 1; }
-  :root[data-design="b"] .motion-thumb { position: absolute; z-index: 0; margin: 0; pointer-events: none; background: var(--ds-raise-bg); border: 1px solid var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
+  :root[data-design="b"] .motion-thumb { position: absolute; z-index: 0; will-change: transform; margin: 0; pointer-events: none; background: var(--ds-raise-bg); border: 1px solid var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
   :root[data-design="b"] .sidebar nav > button:is([data-motion-landing], [data-motion-leaving]) { background: transparent; border-color: transparent; box-shadow: none; }
   :root[data-design="b"] .sidebar nav > button[data-motion-landing] { color: var(--ds-nav-text); }
   :root[data-design="b"] .sidebar nav > button[data-motion-leaving] { color: var(--ds-nav-muted); }
