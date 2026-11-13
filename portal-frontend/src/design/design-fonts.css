@@ -1,0 +1,6 @@
+/*
+ * Polices du design (Geist et Geist Mono, licence SIL OFL, auto-hébergées : aucun appel vers un CDN,
+ * conforme au contexte bancaire). Sous-ensemble latin.
+ */
+@font-face { font-family: "Geist Var"; src: url("fonts/geist-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono Var"; src: url("fonts/geist-mono-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }

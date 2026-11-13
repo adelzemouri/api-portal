@@ -1,0 +1,237 @@
+/*
+ * Mise en page et navigation : grille de la coquille (.shell), barre latérale à sections,
+ * volet de détail flottant, puis les retouches propres au design.
+ * La structure HTML et la logique Angular ne sont pas touchées.
+ */
+
+/* ---------- Commun ---------- */
+:root[data-design] .sidebar { background: var(--ds-nav-bg); color: var(--ds-nav-muted); font-family: var(--ds-font); }
+:root[data-design] .brand-mark path { stroke: var(--ds-nav-muted); stroke-width: 3; }
+:root[data-design] .brand-mark circle { fill: var(--ds-brand); }
+:root[data-design] .sidebar .brand-name { font-family: var(--ds-font-display); color: var(--ds-nav-text); letter-spacing: var(--ds-track-display); }
+:root[data-design] .sidebar nav :is(a, button, .nav-action) {
+  font-family: var(--ds-font); color: var(--ds-nav-muted); box-shadow: none; letter-spacing: 0;
+  transition: background-color var(--ds-dur) var(--ds-ease), color var(--ds-dur) var(--ds-ease);
+}
+:root[data-design] .sidebar nav svg { stroke-width: 1.6; }
+:root[data-design] .sidebar-sync p { font-family: var(--ds-font); font-size: 10px; font-weight: var(--ds-label-weight); letter-spacing: 0.08em; color: var(--ds-nav-muted); }
+:root[data-design] .sidebar-sync .dot { font-size: 8px; line-height: 1; }
+:root[data-design] .sidebar-sync [data-state="OK"] .dot { color: #4fb783; }
+:root[data-design] .sidebar-sync [data-state="ERROR"] .dot { color: #e0655c; }
+:root[data-design] .sidebar-sync-eta { font-family: var(--ds-font-mono); font-weight: 400; color: var(--ds-nav-muted); border-top-color: var(--ds-nav-line); }
+:root[data-design] .sidebar-version { font-family: var(--ds-font-mono); color: var(--ds-nav-muted); opacity: 0.7; }
+
+:root[data-design] .topbar {
+  min-height: var(--ds-top-h); padding: 0 var(--ds-page-x); gap: var(--ds-s4);
+  background: var(--ds-top-bg); color: var(--ds-top-text);
+  border-bottom: 1px solid var(--ds-line); box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+:root[data-design] main { max-width: var(--ds-content-max); margin: 0 auto; padding: var(--ds-page-y) var(--ds-page-x); }
+:root[data-design] .app-footer { max-width: var(--ds-content-max); margin: 0 auto; }
+
+@media (min-width: 901px) {
+  :root[data-design="b"] .shell { grid-template-columns: var(--ds-nav-w) minmax(0, 1fr); }
+  :root[data-design="b"] .sidebar { width: var(--ds-nav-w); align-items: stretch; gap: 0; padding: 0; border-right: 1px solid var(--ds-nav-line); }
+  :root[data-design="b"] .sidebar .brand.wordmark { flex-direction: row; align-items: center; gap: 10px; height: var(--ds-top-h); padding: 0 var(--ds-s5); }
+  :root[data-design="b"] .brand-mark { width: 24px; min-width: 24px; height: 24px; }
+  :root[data-design="b"] .brand-mark path { stroke: var(--ds-nav-text); }
+  :root[data-design="b"] .sidebar .brand-name { font-size: 17px; font-weight: 600; }
+  :root[data-design="b"] .sidebar nav { align-items: stretch; gap: 2px; padding: var(--ds-s4) var(--ds-s3) var(--ds-s5); border-top: 1px solid var(--ds-nav-line); }
+  /* Intitulés de section en mono, comme des repères de structure (mot identique en FR et EN) */
+  :root[data-design="b"] .sidebar nav::before { content: "Navigation"; padding: var(--ds-s1) var(--ds-s2) var(--ds-s3); font-family: var(--ds-font-mono); font-size: 12px; color: var(--ds-text-3); }
+  :root[data-design="b"] .sidebar nav :is(a, button, .nav-action) {
+    flex-direction: row; justify-content: flex-start; gap: 12px; width: auto; min-height: 38px; padding: 0 var(--ds-s3);
+    font-size: 14px; font-weight: 450; line-height: 1; text-align: left; border: 1px solid transparent; border-radius: var(--ds-r-md);
+  }
+  :root[data-design="b"] .sidebar nav svg { width: 17px; height: 17px; }
+  :root[data-design="b"] .sidebar nav :is(a, button):hover { color: var(--ds-nav-text); background: var(--ds-nav-hover); }
+  :root[data-design="b"] .sidebar nav :is(a, button).active { color: var(--ds-nav-text); background: var(--ds-nav-active-bg); border-color: var(--ds-line-strong); }
+  :root[data-design="b"] .sidebar-sync {
+    display: flex; flex-direction: column; align-items: stretch; gap: 0; margin: 0; padding: var(--ds-s4) var(--ds-s3);
+    border-top: 1px solid var(--ds-nav-line); font-size: 14px; text-align: left;
+  }
+  :root[data-design="b"] .sidebar-sync p { margin: 0; padding: var(--ds-s1) var(--ds-s2) var(--ds-s3); font-family: var(--ds-font-mono); font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ds-text-3); }
+  :root[data-design="b"] .sidebar-sync > span[data-state] { justify-content: flex-start; gap: 14px; min-height: 34px; padding: 0 var(--ds-s3); color: var(--ds-nav-muted); }
+  :root[data-design="b"] .sidebar-sync .dot { font-size: 11px; }
+  :root[data-design="b"] .sidebar-sync [data-state="OK"] .dot { color: var(--ds-ok); }
+  :root[data-design="b"] .sidebar-sync [data-state="ERROR"] .dot { color: var(--ds-err); }
+  :root[data-design="b"] .sidebar-sync-eta { width: auto; margin: var(--ds-s2) var(--ds-s3) 0; padding-top: var(--ds-s3); font-size: 12px; text-align: left; justify-content: flex-start; color: var(--ds-text-3); }
+  :root[data-design="b"] .sidebar-sync-eta br { display: none; }
+  :root[data-design="b"] .sidebar-version { width: auto; justify-content: flex-start; margin-top: auto; padding: 0 var(--ds-s5) var(--ds-s4); font-size: 11px; }
+  :root[data-design="b"] .topbar { border-bottom-color: transparent; }
+
+}
+
+/* ---------- Volet de détail ---------- */
+@media (min-width: 761px) {
+  :root[data-design="b"] .side-drawer { top: var(--ds-s3); right: var(--ds-s3); bottom: var(--ds-s3); width: min(660px, calc(100vw - 24px)); }
+}
+
+/* ---------- Caractère du design ---------- */
+
+/* Graphite : surfaces à peine plus claires que le fond, chiffres fins, deltas en mono coloré */
+:root[data-design="b"] :is(.page-head h2, .api-head h2) { font-weight: 400; }
+:root[data-design="b"] .lede { color: var(--ds-text-2); }
+:root[data-design="b"] :is(.tile-kicker, .eyebrow, .page-kicker, .drawer-section h4, table.list > thead th, .env-compare-table thead th, .owner-list dt, .gw-name, .team-clock-city, .filter-chip-group-label, .menu-label, .mini-map-node > span) { font-family: var(--ds-font-mono); color: var(--ds-text-3); }
+:root[data-design="b"] .splunk-metric-label { font-family: var(--ds-font); font-size: var(--ds-fs-sm); color: var(--ds-text-2); }
+:root[data-design="b"] .splunk-metric-grid { gap: var(--ds-s3); border: 0; overflow: visible; }
+:root[data-design="b"] .splunk-metric-card, :root[data-design="b"] .splunk-metric-card:first-child { padding: var(--ds-s5); border: 1px solid var(--ds-line); border-radius: var(--ds-r-lg); background-color: var(--ds-surface-2); }
+:root[data-design="b"] .splunk-metric-top { flex-direction: row; }
+:root[data-design="b"] .splunk-metric-value { font-weight: 500; margin-top: var(--ds-s3); }
+:root[data-design="b"] .splunk-metric-card[data-tone="error"] .splunk-metric-value { color: var(--ds-text); }
+:root[data-design="b"] .splunk-trend { font-family: var(--ds-font-mono); color: var(--ds-ok); }
+:root[data-design="b"] .splunk-metric-card[data-tone="error"] .splunk-trend { color: var(--ds-err); }
+:root[data-design="b"] .splunk-metric-card[data-tone="warning"] .splunk-trend { color: var(--ds-warn); }
+:root[data-design="b"] .splunk-meter { height: 3px; border-radius: 2px; background: var(--ds-surface-3); }
+:root[data-design="b"] .splunk-meter span { border-radius: 2px; background: var(--ds-text-3); }
+:root[data-design="b"] .splunk-metric-card p { font-family: var(--ds-font-mono); font-size: 11.5px; color: var(--ds-text-3); }
+:root[data-design="b"] .catalog-strip { border: 0; padding: 0; }
+:root[data-design="b"] .catalog-strip strong { font-size: var(--ds-fs-md); }
+:root[data-design="b"] .focus-item { padding-inline: var(--ds-s3); margin-inline: calc(-1 * var(--ds-s3)); border-bottom: 0; border-radius: var(--ds-r-md); }
+:root[data-design="b"] .focus-item .pill { font-family: var(--ds-font-mono); color: var(--ds-text-3); }
+:root[data-design="b"] .table-wrap { border-radius: var(--ds-r-md); overflow: hidden; background: transparent; }
+:root[data-design="b"] table.list > thead th { background: transparent; border-bottom-color: var(--ds-line); }
+:root[data-design="b"] :is(.chip, .filter-chip-group .chip, .api-filter-group .filter-chip-group .chip) { background: transparent; border-color: var(--ds-line); }
+:root[data-design="b"] :is(.chip, .filter-chip-group .chip, .api-filter-group .filter-chip-group .chip).active { color: var(--ds-text); background: var(--ds-surface-3); border-color: var(--ds-line-strong); }
+:root[data-design="b"] a { color: var(--ds-text); text-decoration-color: var(--ds-text-3); }
+:root[data-design="b"] .banner-error { background: transparent; border-color: var(--ds-line); border-left-color: var(--ds-err); }
+:root[data-design="b"] .mini-kpis strong { font-size: var(--ds-fs-md); }
+
+/* B — relief : surfaces bombées pour ce qui se presse, creusées pour ce qui se remplit.
+   Tout passe par les tokens --ds-raise-*, --ds-sunk-*, --ds-primary-* (jour et nuit). */
+:root[data-design="b"] :is(.panel, .focus-list, .home-insights > .panel, .split .panel, .env-compare-panel, .callout, .split .callout) { background: var(--ds-panel-bg); box-shadow: var(--ds-panel-shadow); }
+:root[data-design="b"] :is(.btn, .pager-buttons button, .env-compare-table button, .user-menu-trigger, button.copy, .row-copy-text button.copy) {
+  background: var(--ds-raise-bg); border: 1px solid var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); color: var(--ds-text);
+  transition: box-shadow var(--ds-dur) var(--ds-ease), transform var(--ds-dur) var(--ds-ease), background var(--ds-dur) var(--ds-ease);
+}
+:root[data-design="b"] :is(.btn, .pager-buttons button, .env-compare-table button, .user-menu-trigger, button.copy, .row-copy-text button.copy):hover,
+:root[data-design="b"] .user-menu.open .user-menu-trigger { background: var(--ds-raise-bg-hover); border-color: var(--ds-raise-edge); color: var(--ds-text); }
+:root[data-design="b"] :is(.btn, .pager-buttons button, .env-compare-table button, .user-menu-trigger, button.copy):active { box-shadow: var(--ds-press-shadow); transform: translateY(1px); }
+:root[data-design="b"] :is(.btn, .pager-buttons button):disabled { background: var(--ds-surface-2); border-color: var(--ds-line); box-shadow: none; color: var(--ds-text-3); transform: none; }
+:root[data-design="b"] :is(.btn-primary, .login-submit) { color: var(--ds-accent-ink); background: var(--ds-primary-bg); border-color: transparent; box-shadow: var(--ds-primary-shadow); }
+:root[data-design="b"] :is(.btn-primary, .login-submit):hover { color: var(--ds-accent-ink); background: var(--ds-primary-bg-hover); border-color: transparent; }
+:root[data-design="b"] kbd { color: var(--ds-text-2); background: var(--ds-raise-bg); border-color: var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
+:root[data-design="b"] :is(label.search, .search-trigger, .login-form input, .env-switch) { background: var(--ds-sunk-bg); border-color: var(--ds-line); box-shadow: var(--ds-sunk-shadow); }
+:root[data-design="b"] .env-switch { padding: 3px; border: 1px solid var(--ds-line); }
+:root[data-design="b"] .env-switch button { min-height: calc(var(--ds-ctl-h) - 8px); }
+:root[data-design="b"] .env-switch button[aria-pressed="true"],
+:root[data-design="b"] .env-switch button[aria-pressed="true"]:hover { color: var(--ds-text) !important; background: var(--ds-raise-bg) !important; box-shadow: var(--ds-raise-shadow), 0 0 0 1px var(--ds-raise-edge) !important; }
+:root[data-design="b"] :is(.chip, .filter-chip-group .chip, .api-filter-group .filter-chip-group .chip).active { background: var(--ds-raise-bg); border-color: var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
+:root[data-design="b"] .splunk-metric-card, :root[data-design="b"] .splunk-metric-card:first-child { background-color: var(--ds-surface-2); box-shadow: var(--ds-panel-shadow); }
+@media (min-width: 901px) {
+  :root[data-design="b"] .sidebar nav :is(a, button).active { background: var(--ds-raise-bg); border-color: var(--ds-raise-edge); box-shadow: var(--ds-raise-shadow); }
+}
+
+/* B — retouches de détail */
+/* Volet : même respiration au-dessus et au-dessous de chaque ligne de responsable, le filet de section ferme la liste */
+:root[data-design="b"] .owner-list > div { padding: 9px 0; }
+:root[data-design="b"] .drawer-section:has(> .owner-list:last-child) { padding-bottom: 0; }
+/* Menu utilisateur : le nom est déjà sur le bouton qui l'ouvre */
+:root[data-design="b"] .user-menu-summary { display: none; }
+/* Le champ de recherche de l'en-tête est un bouton qui ouvre la palette : il se présente comme un champ */
+:root[data-design="b"] .search-trigger { cursor: text; }
+/* Bloc Sync retiré de la navigation : l'état par environnement est dans « Environment health »,
+   où design-b-extras.js recopie le compte à rebours (le bloc reste dans le DOM, source de la recopie). */
+:root[data-design="b"] .sidebar-sync { display: none; }
+:root[data-design="b"] .sync-eta-mirror { margin-left: var(--ds-s3); padding: 2px 7px; font-family: var(--ds-font-mono); font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ds-text-2); background: var(--ds-sunk-bg); border: 1px solid var(--ds-line); border-radius: var(--ds-r-sm); }
+/* Copier : un pictogramme, le libellé reste lu par les lecteurs d'écran (aria-label) et en infobulle */
+:root[data-design="b"] button.copy, :root[data-design="b"] .row-copy-text button.copy {
+  display: inline-grid; place-items: center; flex: none; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0;
+  font-size: 0; line-height: 0; color: var(--ds-text-2); overflow: hidden;
+}
+:root[data-design="b"] button.copy { position: relative; }
+/* Centré en absolu : le libellé masqué reste un élément de grille et décalait le pictogramme */
+:root[data-design="b"] button.copy::before {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 15px; height: 15px; background: currentColor;
+  -webkit-mask: var(--ds-icon-copy) center / contain no-repeat; mask: var(--ds-icon-copy) center / contain no-repeat;
+}
+:root[data-design="b"] button.copy:hover { color: var(--ds-text); }
+:root[data-design="b"] td button.copy { margin-left: var(--ds-s2); }
+/* .copy répété : doit l'emporter sur la couleur de survol des boutons en relief */
+:root[data-design="b"] button.copy.copy.copy:is([data-copied], [aria-label^="Copied"], [aria-label^="Copié"]) { color: var(--ds-ok); }
+:root[data-design="b"] button.copy:is([data-copied], [aria-label^="Copied"], [aria-label^="Copié"])::before { -webkit-mask-image: var(--ds-icon-check); mask-image: var(--ds-icon-check); }
+:root[data-design="b"] {
+  --ds-icon-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2.5'/%3E%3Cpath d='M5.5 15H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 4h8a1.5 1.5 0 0 1 1.5 1.5V6'/%3E%3C/svg%3E");
+  --ds-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+
+/* B — en-têtes de page factuels : le nom de la rubrique, l'environnement en pastille, pas de phrase d'accroche.
+   Le titre affiché vient de data-title / data-env, posés par design-b-extras.js à partir du libellé de
+   navigation actif (donc traduit) ; le texte d'origine reste dans le DOM. */
+/* Le sur-titre répétait l'environnement déjà porté par la pastille ; le décompte reste dans le pied du tableau. */
+:root[data-design="b"] .page-head :is(.lede, .page-kicker, .eyebrow) { display: none; }
+/* Guide de l'aide : ses scènes prennent les surfaces de l'application, jour et nuit (le reste est dans design-b-extras.js) */
+:root[data-design="b"] .understand-wso2-native {
+  --st-bg: var(--ds-surface-2); --st-node: var(--ds-surface); --st-line: var(--ds-line-strong); --st-ring: var(--ds-line);
+  --st-fg: var(--ds-text); --st-muted: var(--ds-text-2); --st-or: var(--ds-signal); --st-ok: var(--ds-ok); --st-err: var(--ds-err); --st-warn: var(--ds-warn);
+}
+/* Le guide n'est plus un grand panneau : chacun de ses diagrammes est sa propre tuile (stylée dans le Shadow DOM) */
+:root[data-design="b"] .understand-wso2-native-panel .understand-wso2-native { background: none; }
+:root[data-design="b"] section.panel.help.understand-wso2-native-panel { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; overflow: visible; }
+:root[data-design="b"] .page-head h2[data-title] { display: flex; align-items: center; gap: var(--ds-s3); font-size: 0; }
+:root[data-design="b"] .page-head h2[data-title]::before { content: attr(data-title); font-size: var(--ds-fs-h1); line-height: 1.2; }
+:root[data-design="b"] .page-head h2[data-env]::after {
+  content: attr(data-env); padding: 3px 8px; font-family: var(--ds-font-mono); font-size: 12px; line-height: 1.3; letter-spacing: 0.02em;
+  color: var(--ds-text-2); background: var(--ds-sunk-bg); border: 1px solid var(--ds-line); border-radius: var(--ds-r-sm);
+}
+
+/* Connection details : trois colonnes communes (URL, nature de la gateway, copie) pour que toutes les URL
+   partent du même point et que les boutons de copie soient alignés */
+:root[data-design="b"] dl.conn dd:has(> .url), :root[data-design="b"] dl.conn .conn-line {
+  display: grid; grid-template-columns: minmax(250px, max-content) 76px 28px; align-items: center; column-gap: var(--ds-s3); margin: 0;
+}
+:root[data-design="b"] dl.conn .conn-line + .conn-line { margin-top: var(--ds-s2); }
+:root[data-design="b"] dl.conn :is(dd:has(> .url), .conn-line) > .url { grid-column: 1; grid-row: 1; min-width: 0; margin: 0; padding: 0; }
+:root[data-design="b"] dl.conn .conn-line > .gw-name { grid-column: 2; grid-row: 1; margin: 0; padding: 0; width: auto; min-width: 0; }
+:root[data-design="b"] dl.conn :is(dd:has(> .url), .conn-line) > app-copy-button { grid-column: 3; grid-row: 1; display: grid; }
+:root[data-design="b"] dl.conn app-copy-button button.copy { margin: 0; }
+:root[data-design="b"] dl.conn .conn-hint { margin-top: var(--ds-s3); }
+
+/* B — logo : un nœud relié à trois autres (vue croisée), le centre dans la couleur d'accent.
+   Le SVG d'origine reste dans le DOM ; son tracé est masqué et remplacé par une image de fond. */
+:root[data-design="b"] {
+  --ds-logo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%2318191b' stroke-width='2' stroke-linecap='round' d='M12 12 5.2 6.4M12 12l7.2-4.2M12 12l.8 7.6'/%3E%3Cg fill='%2318191b'%3E%3Ccircle cx='5' cy='6.2' r='2.1'/%3E%3Ccircle cx='19.4' cy='7.7' r='2.1'/%3E%3Ccircle cx='12.8' cy='19.8' r='2.1'/%3E%3C/g%3E%3Ccircle cx='12' cy='12' r='3.2' fill='%23e2600f'/%3E%3C/svg%3E");
+}
+:root[data-design="b"][data-theme="dark"] {
+  --ds-logo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ededed' stroke-width='2' stroke-linecap='round' d='M12 12 5.2 6.4M12 12l7.2-4.2M12 12l.8 7.6'/%3E%3Cg fill='%23ededed'%3E%3Ccircle cx='5' cy='6.2' r='2.1'/%3E%3Ccircle cx='19.4' cy='7.7' r='2.1'/%3E%3Ccircle cx='12.8' cy='19.8' r='2.1'/%3E%3C/g%3E%3Ccircle cx='12' cy='12' r='3.2' fill='%23f2b632'/%3E%3C/svg%3E");
+}
+:root[data-design="b"] svg.brand-mark > * { display: none; }
+:root[data-design="b"] svg.brand-mark { width: 26px; min-width: 26px; height: 26px; background: var(--ds-logo) center / contain no-repeat; }
+
+/* B — illustrations de fond de certaines tuiles (générées par tools/build-art.py, une variante par atmosphère).
+   Décor pur : aucune information n'y figure. Affichées seulement quand la tuile a la place (≥ 1280 px).
+   Les quatre cartes de signaux sont ciblées par leur rang : si leur ordre change, réaffecter ici. */
+:root[data-design="b"] {
+  --ds-art-errors: url("art/errors-light.svg"); --ds-art-latency: url("art/latency-light.svg"); --ds-art-calls: url("art/calls-light.svg");
+  --ds-art-auth: url("art/auth-light.svg"); --ds-art-deploy: url("art/deploy-light.svg"); --ds-art-connect: url("art/connect-light.svg");
+}
+:root[data-design="b"][data-theme="dark"] {
+  --ds-art-errors: url("art/errors-dark.svg"); --ds-art-latency: url("art/latency-dark.svg"); --ds-art-calls: url("art/calls-dark.svg");
+  --ds-art-auth: url("art/auth-dark.svg"); --ds-art-deploy: url("art/deploy-dark.svg"); --ds-art-connect: url("art/connect-dark.svg");
+}
+@media (min-width: 1280px) {
+  :root[data-design="b"] .splunk-metric-card { background-repeat: no-repeat; background-position: right -30px top -22px; background-size: 132px auto; }
+  :root[data-design="b"] .splunk-metric-card:nth-child(1) { background-image: var(--ds-art-errors); }
+  :root[data-design="b"] .splunk-metric-card:nth-child(2) { background-image: var(--ds-art-latency); }
+  :root[data-design="b"] .splunk-metric-card:nth-child(3) { background-image: var(--ds-art-calls); }
+  :root[data-design="b"] .splunk-metric-card:nth-child(4) { background-image: var(--ds-art-auth); }
+  /* L'évolution passe à côté du libellé pour laisser le coin à l'illustration */
+  :root[data-design="b"] .splunk-metric-top { justify-content: flex-start; gap: var(--ds-s2); }
+  :root[data-design="b"] :is(.callout, .split .callout) { background: var(--ds-art-deploy) right -26px bottom -30px / 170px auto no-repeat, var(--ds-panel-bg); }
+  :root[data-design="b"] .callout :is(p, h3) { max-width: 62%; }
+  :root[data-design="b"] .split > .panel { background: var(--ds-art-connect) right -26px top -24px / 160px auto no-repeat, var(--ds-panel-bg); }
+}
+
+/* ---------- Petits écrans (≤ 900 px) ---------- */
+@media (max-width: 900px) {
+  :root[data-design] .sidebar { gap: var(--ds-s3); padding: var(--ds-s2) var(--ds-s3); border-bottom: 1px solid var(--ds-nav-line); }
+  :root[data-design] .sidebar .brand-name { display: none; }
+  :root[data-design] .sidebar nav { flex-direction: row; width: auto; gap: 2px; }
+  :root[data-design] .sidebar nav :is(a, button, .nav-action) { width: auto; min-height: 40px; padding: 4px 10px; font-size: 11px; border-radius: var(--ds-r-md); }
+  :root[data-design] .sidebar nav :is(a, button).active { color: var(--ds-nav-text); background: var(--ds-nav-hover); }
+  :root[data-design] :is(.sidebar-sync, .sidebar-version) { display: none; }
+  :root[data-design] .topbar { padding: var(--ds-s2) var(--ds-s4); }
+  :root[data-design] main { padding: var(--ds-s4); }
+  :root[data-design] .side-drawer { border-radius: var(--ds-r-lg) var(--ds-r-lg) 0 0; }
+}
